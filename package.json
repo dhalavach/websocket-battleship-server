@@ -13,7 +13,11 @@
     "keywords": [],
     "license": "ISC",
     "devDependencies": {
-        "nodemon": "^2.0.16"
+        "@types/node": "^20.3.3",
+        "nodemon": "^2.0.16",
+        "ts-node": "^10.9.1",
+        "tslib": "^2.6.0",
+        "typescript": "^5.1.6"
     },
     "dependencies": {
         "@nut-tree/nut-js": "^2.3.0",
