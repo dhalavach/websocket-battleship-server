@@ -1,7 +1,8 @@
 import { httpServer } from './src/http_server/index.js';
 import { createWebSocketStream, WebSocket, WebSocketServer } from 'ws';
-import { parseData } from './src/helpers.ts';
+import { parseData, checkIfHit } from './src/helpers.ts';
 import { v4 as uuidv4 } from 'uuid';
+import { Ship } from './src/types.ts';
 
 const HTTP_PORT = 3000;
 console.log(`Start static http server on the ${HTTP_PORT} port!`);
@@ -17,6 +18,7 @@ const websocketServer = new WebSocketServer({
 
 const users = new Map();
 let mockId = 0;
+let mockShips: Ship[];
 
 websocketServer.on('connection', (ws: WebSocket) => {
   ws.on('message', (message: string) => {
@@ -60,12 +62,12 @@ websocketServer.on('connection', (ws: WebSocket) => {
         ws.send(resp);
         break;
 
-      case 'update_WWWroom':
+      case 'add_user_to_room':
         const response = JSON.stringify({
           type: 'create_game',
           data: JSON.stringify({
             idGame: 1,
-            idPlayer: mockId,
+            idPlayer: 1,
           }),
           id: 0,
         });
@@ -74,14 +76,18 @@ websocketServer.on('connection', (ws: WebSocket) => {
         break;
 
       case 'add_ships':
-        const ships = JSON.parse(message).ships;
+        // console.log(JSON.parse(message));
+        const ships = JSON.parse(JSON.parse(message).data).ships;
+        console.log(ships);
+        mockShips = ships;
+
         ws.send(
           JSON.stringify({
             type: 'start_game',
-            data: {
+            data: JSON.stringify({
               ships: ships,
               currentPlayerIndex: 1,
-            },
+            }),
             id: 0,
           }),
         );
@@ -101,8 +107,30 @@ websocketServer.on('connection', (ws: WebSocket) => {
                 y: y,
               },
               currentPlayer: 1,
-              //status: "miss"|"killed"|"shot",
-              status: 'shot',
+              status: checkIfHit(mockShips, x, y),
+            }),
+            id: 0,
+          }),
+        );
+        break;
+
+      // case 'attack':
+      //   ws.send(
+      //     JSON.stringify({
+      //       type: 'turn',
+      //       data: JSON.stringify({
+      //         currentPlayer: 2,
+      //       }),
+      //       id: 0,
+      //     }),
+      //   );
+
+      case 'finish':
+        ws.send(
+          JSON.stringify({
+            type: 'finish',
+            data: JSON.stringify({
+              winPlayer: 1,
             }),
             id: 0,
           }),
