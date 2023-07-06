@@ -1,6 +1,6 @@
 import { httpServer } from './src/http_server/index.js';
 import { createWebSocketStream, WebSocket, WebSocketServer } from 'ws';
-import { parseData, checkIfHit } from './src/helpers.ts';
+import { parseData, checkIfHit, checkLoseConditions } from './src/helpers.ts';
 import { v4 as uuidv4 } from 'uuid';
 import { Ship } from './src/types.ts';
 
@@ -79,7 +79,19 @@ websocketServer.on('connection', (ws: WebSocket) => {
         // console.log(JSON.parse(message));
         const ships = JSON.parse(JSON.parse(message).data).ships;
         console.log(ships);
-        mockShips = ships;
+        const shipsWithHitCapacity = ships.map((ship: Ship) => {
+          return {
+            position: {
+              x: ship.position.x,
+              y: ship.position.y,
+            },
+            direction: ship.direction,
+            length: ship.length,
+            hitCapacity: ship.length,
+          };
+        });
+        mockShips = shipsWithHitCapacity;
+        const hitsOfShips = new Set();
 
         ws.send(
           JSON.stringify({
@@ -112,6 +124,17 @@ websocketServer.on('connection', (ws: WebSocket) => {
             id: 0,
           }),
         );
+        if (checkLoseConditions(mockShips)) {
+          ws.send(
+            JSON.stringify({
+              type: 'finish',
+              data: JSON.stringify({
+                winPlayer: 1,
+              }),
+              id: 0,
+            }),
+          );
+        }
         break;
 
       // case 'attack':

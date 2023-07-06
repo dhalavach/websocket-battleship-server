@@ -43,16 +43,36 @@ export const parseData = async (message: string): Promise<string | void> => {
   }
 };
 
+// export const checkIfSunk(shipsWithHitCapacity, hit: Hit): boolean {
+
+// return checkIfHit(shipsWithHitCapacity, hit.x, hit.y) &&
+// }
+
+export const checkLoseConditions = (shipsWithHitCapacity: Ship[]) => {
+  return shipsWithHitCapacity.every((ship) => ship.hitCapacity === 0);
+};
+
+const hitsOfShips = new Set();
+
 export const checkIfHit = (ships: Ship[], x: number, y: number): Hit => {
   function check(ship: Ship) {
     const lengthX = ship.direction === false ? ship.length - 1 : 0;
     const lengthY = ship.direction === true ? ship.length - 1 : 0;
-    return (
+    if (
       x >= ship.position.x &&
       x <= ship.position.x + lengthX &&
       y >= ship.position.y &&
       y <= ship.position.y + lengthY
-    );
+    ) {
+      if (!hitsOfShips.has(`${x}*${y}`) && ship.hitCapacity) ship.hitCapacity--;
+      hitsOfShips.add(`${x}*${y}`);
+      return true;
+    } else {
+      return false;
+    }
   }
+  console.log(hitsOfShips);
+  console.log(ships);
+
   return ships.some(check) ? 'shot' : 'miss';
 };
