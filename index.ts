@@ -41,6 +41,26 @@ websocketServer.on('connection', (ws: WebSocket) => {
         break;
 
       case 'create_room':
+        const roomUsersArr = [
+          {
+            name: 'asdf@email.com',
+            index: 1,
+          },
+        ];
+        const roomData = { roomId: 1, roomUsers: roomUsersArr };
+
+        const roomsArr = [];
+        roomsArr.push(roomData);
+        const resp = JSON.stringify({
+          type: 'update_room',
+          data: JSON.stringify(roomsArr),
+          id: 0,
+        });
+        console.log(resp);
+        ws.send(resp);
+        break;
+
+      case 'update_WWWroom':
         const response = JSON.stringify({
           type: 'create_game',
           data: JSON.stringify({
@@ -82,7 +102,7 @@ websocketServer.on('connection', (ws: WebSocket) => {
               },
               currentPlayer: 1,
               //status: "miss"|"killed"|"shot",
-              status: 'miss',
+              status: 'shot',
             }),
             id: 0,
           }),
@@ -93,12 +113,12 @@ websocketServer.on('connection', (ws: WebSocket) => {
     }
   });
 
-  ws.on('data', async (chunk) => {
-    const data = chunk.toString();
-    const parsedData = await parseData(data);
-    //console.log('received: %s', data);
-    // const data = await parseCommand(command);
-  });
+  // ws.on('data', async (chunk) => {
+  //   const data = chunk.toString();
+  //   const parsedData = await parseData(data);
+  //   //console.log('received: %s', data);
+  //   // const data = await parseCommand(command);
+  // });
 });
 
 process.on('SIGINT', () => {
