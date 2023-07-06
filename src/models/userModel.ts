@@ -2,6 +2,7 @@ export class User {
   name: string;
   password: string;
   victories: number;
+  ships?: [];
 
   constructor(name: string, password: string) {
     this.name = name;

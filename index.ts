@@ -29,8 +29,12 @@ websocketServer.on('connection', (ws: WebSocket) => {
       case 'create_room':
         const roomUsersArr = [
           {
-            name: 'asdf@email.com',
+            name: 'Logan',
             index: 1,
+          },
+          {
+            name: 'asdf@email.com',
+            index: 2,
           },
         ];
         const roomData = { roomId: 1, roomUsers: roomUsersArr };
@@ -51,18 +55,22 @@ websocketServer.on('connection', (ws: WebSocket) => {
           type: 'create_game',
           data: JSON.stringify({
             idGame: 1,
-            idPlayer: 1,
+            idPlayer: 'asdf@email.com',
           }),
           id: 0,
         });
-        console.log(response);
+        // console.log(response);
         ws.send(response);
         break;
 
       case 'add_ships':
         // console.log(JSON.parse(message));
         const ships = JSON.parse(JSON.parse(message).data).ships;
-        console.log(ships);
+        const gameId = JSON.parse(JSON.parse(message).data).gameId;
+        const indexPlayer = JSON.parse(JSON.parse(message).data).indexPlayer;
+
+        console.log(gameId);
+        console.log(indexPlayer);
         const shipsWithHitCapacity = ships.map((ship: Ship) => {
           return {
             position: {
@@ -75,13 +83,15 @@ websocketServer.on('connection', (ws: WebSocket) => {
           };
         });
         mockShips = shipsWithHitCapacity;
+        // users[indexPlayer].ships = mockShips;
+
         const hitsOfShips = new Set();
 
         ws.send(
           JSON.stringify({
             type: 'start_game',
             data: JSON.stringify({
-              ships: ships,
+              ships: mockShips,
               currentPlayerIndex: 1,
             }),
             id: 0,
@@ -105,6 +115,15 @@ websocketServer.on('connection', (ws: WebSocket) => {
               currentPlayer: 1,
               status: checkIfHit(mockShips, x, y),
             }),
+            id: 0,
+          }),
+        );
+        ws.send(
+          JSON.stringify({
+            type: 'turn',
+            data: {
+              currentPlayer: 1,
+            },
             id: 0,
           }),
         );

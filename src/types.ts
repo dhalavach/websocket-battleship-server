@@ -8,7 +8,8 @@ export type User = {
   id?: string;
   name: string;
   password: string;
-  victories: number
+  victories: number;
+  
 };
 
 export type Hit = 'miss' | 'killed' | 'shot';
@@ -18,5 +19,5 @@ export type Ship = {
   direction: boolean;
   type?: 'small' | 'medium' | 'large' | 'huge';
   length: number;
-  hitCapacity?: number,
+  hitCapacity?: number;
 };
