@@ -16,6 +16,7 @@ const websocketServer = new WebSocketServer({
 });
 
 const users = new Map();
+let mockId = 0;
 
 websocketServer.on('connection', (ws: WebSocket) => {
   ws.on('message', (message: string) => {
@@ -23,23 +24,69 @@ websocketServer.on('connection', (ws: WebSocket) => {
     switch (JSON.parse(message).type) {
       case 'reg':
         //to do - validation
-        const id = uuidv4();
+        //const id = uuidv4();
         const data = JSON.parse(message).data; //json
         console.log(data);
         ws.send(
           JSON.stringify({
             type: 'reg',
             data: data,
-            id: id,
+            id: mockId++,
+            error: false,
+            errorText: '',
           }),
         );
         users.set(JSON.parse(data).name, JSON.parse(data).password);
         console.log(users);
         break;
-      
-      
-      case "create room":
-        
+
+      case 'create_room':
+        const response = JSON.stringify({
+          type: 'create_game',
+          data: JSON.stringify({
+            idGame: 1,
+            idPlayer: mockId,
+          }),
+          id: 0,
+        });
+        console.log(response);
+        ws.send(response);
+        break;
+
+      case 'add_ships':
+        const ships = JSON.parse(message).ships;
+        ws.send(
+          JSON.stringify({
+            type: 'start_game',
+            data: {
+              ships: ships,
+              currentPlayerIndex: 1,
+            },
+            id: 0,
+          }),
+        );
+        break;
+
+      case 'attack':
+        const x = JSON.parse(JSON.parse(message).data).x;
+        console.log('x: ', x);
+        const y = JSON.parse(JSON.parse(message).data).y;
+        console.log('y: ', y);
+        ws.send(
+          JSON.stringify({
+            type: 'attack',
+            data: JSON.stringify({
+              position: {
+                x: x,
+                y: y,
+              },
+              currentPlayer: 1,
+              //status: "miss"|"killed"|"shot",
+              status: 'miss',
+            }),
+            id: 0,
+          }),
+        );
 
       default:
         break;
