@@ -8,6 +8,7 @@ export type User = {
   id?: string;
   name: string;
   password: string;
+  victories: number
 };
 
 export type Hit = 'miss' | 'killed' | 'shot';
