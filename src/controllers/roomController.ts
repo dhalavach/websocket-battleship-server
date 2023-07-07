@@ -22,7 +22,7 @@ export const createRoom = (message: string) => {
     data: JSON.stringify(roomsArr),
     id: 0,
   });
-  console.log(resp);
+  //console.log(resp);
   // ws.send(resp);
   websocketServer.clients.forEach((client: WebSocket) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -31,10 +31,12 @@ export const createRoom = (message: string) => {
   });
 };
 
-export const addUsersToRoom = (message: string) => {
+export const addUsersToRoom = (message: string, ws: WebSocket) => {
+  console.log('message on add to room: ' + message);
   usersInGame.push(users[0]);
   usersInGame.push(users[1]);
-  console.log(usersInGame);
+  console.log('users: ' + users.map((user) => user.name));
+  console.log('usrs in game: ' + usersInGame.map((user) => user.name));
   const response = JSON.stringify({
     type: 'create_game',
     data: JSON.stringify({
@@ -44,10 +46,10 @@ export const addUsersToRoom = (message: string) => {
     id: 0,
   });
   // console.log(response);
-  websocketServer.clients.forEach((client: WebSocket) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(response);
-    }
-  });
-  // ws.send(response);
+  // websocketServer.clients.forEach((client: WebSocket) => {
+  //   if (client.readyState === WebSocket.OPEN) {
+  //     client.send(response);
+  //   }
+  // });
+  ws.send(response);
 };

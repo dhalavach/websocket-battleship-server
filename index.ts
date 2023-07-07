@@ -27,6 +27,7 @@ export const websocketServer = new WebSocketServer({
 });
 
 
+
 websocketServer.on('connection', (ws: WebSocket) => {
   ws.on('message', (message: string) => {
     switch (JSON.parse(message).type) {
@@ -39,11 +40,11 @@ websocketServer.on('connection', (ws: WebSocket) => {
         break;
 
       case 'add_user_to_room':
-        addUsersToRoom(message);
+        addUsersToRoom(message, ws);
         break;
 
       case 'add_ships':
-        handleAddShips(message, ws, websocketServer);
+        handleAddShips(message, ws);
         break;
 
       case 'attack':
