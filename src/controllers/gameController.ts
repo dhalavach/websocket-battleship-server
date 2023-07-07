@@ -5,18 +5,20 @@ import {
   usersWithShips,
   usersInGame,
 } from './../models/gameModel.ts';
-import { Ship, User } from '../types.ts';
+import { Ship, User, WebSocketWithId } from '../types.ts';
+import { users } from '../models/userModel.ts';
 
 // export const setUserShips = (user: User, ships: Ship[]) => {
 //   usersWithShips.set(user.name, ships);
 // };
 
-export const handleAddShips = (message: string, ws: WebSocket) => {
+export const handleAddShips = (message: string, ws: WebSocketWithId) => {
   console.log('message on add ships: ' + message);
   const ships = JSON.parse(JSON.parse(message).data).ships;
   const gameId = JSON.parse(JSON.parse(message).data).gameId;
   const player = JSON.parse(JSON.parse(message).data).indexPlayer;
-  // console.log('indexPlayer: ' + player.name);
+  console.log('indexPlayer: ' + player);
+  console.log('ws id: ' + ws.id);
 
   const shipsWithHitCapacity = ships.map((ship: Ship) => {
     return {
@@ -30,9 +32,9 @@ export const handleAddShips = (message: string, ws: WebSocket) => {
     };
   });
 
-  console.log('player namd before setting the ship: ' + player.name);
+  console.log('player name before setting the ships: ' + ws.id);
 
-  usersWithShips.set(player.name, shipsWithHitCapacity);
+  usersWithShips.set(ws.id, shipsWithHitCapacity);
 
   // mockShips = shipsWithHitCapacity;
   // users[indexPlayer].ships = mockShips;
@@ -42,7 +44,7 @@ export const handleAddShips = (message: string, ws: WebSocket) => {
       type: 'start_game',
       data: JSON.stringify({
         ships: ships,
-        // currentPlayerIndex: 0,
+        currentPlayerIndex: ws.id,
       }),
       id: 0,
     }),
@@ -64,19 +66,20 @@ export const handleAddShips = (message: string, ws: WebSocket) => {
   // });
 };
 
-export const handleAttack = (message: string, ws: WebSocket) => {
+export const handleAttack = (message: string, ws: WebSocketWithId) => {
   console.log('message on attack: ' + message);
   const player = JSON.parse(JSON.parse(message).data).indexPlayer;
-  console.log('player name: ' + player.name);
-  const opponent = usersInGame.filter((user) => user.name !== player.name)[0];
-  console.log('opponent: name: ' + opponent.name);
+  console.log('player name: ' + ws.id);
+  console.log('users in game: ' + usersInGame.map((u) => u.name));
+  const opponent = users.filter((user) => user.name !== ws.id)[0];
+  if (opponent) console.log('opponent: ' + opponent.name);
   console.log(
-    'asdf@email.com ships from users with ships map : ' +
-      usersWithShips.get('asdf@email.com'),
+    'player ships from users with ships map : ' + usersWithShips.get(ws.id),
   );
-  console.log(
-    'Logan ships from users with ships map : ' + usersWithShips.get('Logan'),
-  );
+  // console.log(
+  //   'opponent ships from users with ships map : ' +
+  //     usersWithShips.get(opponent),
+  // );
 
   const x = JSON.parse(JSON.parse(message).data).x;
   const y = JSON.parse(JSON.parse(message).data).y;
@@ -89,8 +92,8 @@ export const handleAttack = (message: string, ws: WebSocket) => {
             x: x,
             y: y,
           },
-          currentPlayer: player,
-          status: checkIfHit(usersWithShips.get(player.name), x, y),
+          currentPlayer: ws.id,
+          status: checkIfHit(usersWithShips.get(opponent.name), x, y),
         }),
         id: 0,
       }),
@@ -108,25 +111,25 @@ export const handleAttack = (message: string, ws: WebSocket) => {
   //     id: 0,
   //   }),
   // );
-  if (checkLoseConditions(usersWithShips.get(player.name))) {
-    ws.send(
-      JSON.stringify({
-        type: 'finish',
-        data: JSON.stringify({
-          winPlayer: 1,
-        }),
-        id: 0,
-      }),
-    );
-  }
+  // if (checkLoseConditions(usersWithShips.get(player.name))) {
+  //   ws.send(
+  //     JSON.stringify({
+  //       type: 'finish',
+  //       data: JSON.stringify({
+  //         winPlayer: 1,
+  //       }),
+  //       id: 0,
+  //     }),
+  //   );
+  // }
 };
 
-export const handleFinish = (ws: WebSocket) => {
+export const handleFinish = (ws: WebSocketWithId) => {
   ws.send(
     JSON.stringify({
       type: 'finish',
       data: JSON.stringify({
-        winPlayer: 1,
+        winPlayer: ws.id,
       }),
       id: 0,
     }),

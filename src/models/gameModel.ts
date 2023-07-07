@@ -1,6 +1,6 @@
 import { User, Hit, Ship } from './../types.ts';
 import { users } from './userModel.ts';
-
+export let activeUserName: string;
 export const usersInGame: User[] = [];
 const hitsOfShips = new Set();
 export const usersWithShips = new Map();

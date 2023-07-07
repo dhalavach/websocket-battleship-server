@@ -1,3 +1,5 @@
+import { WebSocket } from 'ws';
+
 export type Message = {
   type?: string;
   data?: string;
@@ -31,4 +33,8 @@ export type ServerRegistrationPacketPayload = {
   index: number;
   error: boolean;
   errorText: string;
+};
+
+export type WebSocketWithId = WebSocket & {
+  id: string;
 };

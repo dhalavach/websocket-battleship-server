@@ -7,7 +7,7 @@ import {
   handleFinish,
 } from './src/controllers/gameController.ts';
 import { v4 as uuidv4 } from 'uuid';
-import { Ship, User } from './src/types.ts';
+import { Ship, User, WebSocketWithId } from './src/types.ts';
 import { registerUser } from './src/controllers/userController.ts';
 import { usersInGame } from './src/models/gameModel.ts';
 import {
@@ -26,9 +26,11 @@ export const websocketServer = new WebSocketServer({
   server: httpServer,
 });
 
+websocketServer.on('connection', (ws: WebSocketWithId) => {
+  console.log(
+    'number of websocket server clients: ' + websocketServer.clients.size,
+  );
 
-
-websocketServer.on('connection', (ws: WebSocket) => {
   ws.on('message', (message: string) => {
     switch (JSON.parse(message).type) {
       case 'reg':
@@ -36,7 +38,7 @@ websocketServer.on('connection', (ws: WebSocket) => {
         break;
 
       case 'create_room':
-        createRoom(message);
+        createRoom(message, ws);
         break;
 
       case 'add_user_to_room':
