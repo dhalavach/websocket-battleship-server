@@ -1,8 +1,8 @@
 import WebSocket from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../types.ts';
-import { validate, getUser, addUser } from '../models/userModel.ts';
-export const registerUser = (message: string, ws: WebSocket, users: User[]) => {
+import { users, validate, getUser, addUser } from '../models/userModel.ts';
+export const registerUser = (message: string, ws: WebSocket,) => {
   const data = JSON.parse(message).data;
   const name = JSON.parse(JSON.parse(message).data).name;
   const password = JSON.parse(JSON.parse(message).data).password;
