@@ -6,11 +6,13 @@ import {
   usersInGame,
 } from './../models/gameModel.ts';
 import { Ship, User, WebSocketWithId } from '../types.ts';
-import { users } from '../models/userModel.ts';
+import { users, playerIndices } from '../models/userModel.ts';
 
 // export const setUserShips = (user: User, ships: Ship[]) => {
 //   usersWithShips.set(user.name, ships);
 // };
+
+
 
 export const handleAddShips = (message: string, ws: WebSocketWithId) => {
   console.log('message on add ships: ' + message);
@@ -44,7 +46,7 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
       type: 'start_game',
       data: JSON.stringify({
         ships: ships,
-        currentPlayerIndex: ws.id,
+        currentPlayerIndex: playerIndices.get(ws.id),
       }),
       id: 0,
     }),
@@ -92,7 +94,7 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
             x: x,
             y: y,
           },
-          currentPlayer: ws.id,
+          currentPlayer: playerIndices.get(ws.id), //change this back to ws.id
           status: checkIfHit(usersWithShips.get(opponent.name), x, y),
         }),
         id: 0,

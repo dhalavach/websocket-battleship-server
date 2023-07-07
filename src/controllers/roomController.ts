@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import { usersInGame } from '../models/gameModel.ts';
-import { users } from '../models/userModel.ts';
+import { users, playerIndices } from '../models/userModel.ts';
 import { websocketServer } from '../../index.ts';
 import { WebSocketWithId } from '../types.ts';
 
@@ -14,7 +14,7 @@ export const createRoom = (message: string, ws: WebSocketWithId) => {
   const roomsArr = [];
   const roomData = { roomId: roomsArr.length + 1, roomUsers: roomUsersArr };
   roomsArr.push(roomData);
-  
+
   const userToAdd = users.find((user) => user.name === ws.id);
   if (userToAdd) usersInGame.push(userToAdd);
 
@@ -43,7 +43,7 @@ export const addUsersToRoom = (message: string, ws: WebSocketWithId) => {
     data: JSON.stringify({
       //  idGame: JSON.parse(JSON.parse(message).data).indexRoom,
       idGame: 1,
-      idPlayer: ws.id,
+      idPlayer: playerIndices.get(ws.id),
     }),
     id: 0,
   });

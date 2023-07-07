@@ -39,6 +39,8 @@ import { User } from '../types.ts';
 // }
 
 export const users: User[] = [];
+export const playerIndices = new Map();
+users.map((user, index) => playerIndices.set(user.name, index));
 
 export const validate = (name: string, password: string, users: User[]) => {
   const user = users.find((user) => user.name === name);
