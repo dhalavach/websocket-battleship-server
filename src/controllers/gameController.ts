@@ -12,8 +12,6 @@ import { users, playerIndices } from '../models/userModel.ts';
 //   usersWithShips.set(user.name, ships);
 // };
 
-
-
 export const handleAddShips = (message: string, ws: WebSocketWithId) => {
   console.log('message on add ships: ' + message);
   const ships = JSON.parse(JSON.parse(message).data).ships;
@@ -47,6 +45,16 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
       data: JSON.stringify({
         ships: ships,
         currentPlayerIndex: playerIndices.get(ws.id),
+      }),
+      id: 0,
+    }),
+  );
+
+  ws.send(
+    JSON.stringify({
+      type: 'turn',
+      data: JSON.stringify({
+        currentPlayer: playerIndices.get(ws.id),
       }),
       id: 0,
     }),
@@ -124,6 +132,22 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
   //     }),
   //   );
   // }
+};
+
+export const handleTurn = (ws: WebSocketWithId) => {
+  const opponent = users.filter((user) => user.name !== ws.id)[0];
+  console.log('player name from handleTurn: ' + ws.id);
+  console.log('opp name from handleTurn: ' + opponent.name);
+  console.log('playerIndices from handleTurn: ' + playerIndices);
+  ws.send(
+    JSON.stringify({
+      type: 'turn',
+      data: JSON.stringify({
+        currentPlayer: playerIndices.get(opponent.name),
+      }),
+      id: 0,
+    }),
+  );
 };
 
 export const handleFinish = (ws: WebSocketWithId) => {

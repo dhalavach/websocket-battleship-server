@@ -5,6 +5,7 @@ import {
   handleAddShips,
   handleAttack,
   handleFinish,
+  handleTurn,
 } from './src/controllers/gameController.ts';
 import { v4 as uuidv4 } from 'uuid';
 import { Ship, User, WebSocketWithId } from './src/types.ts';
@@ -51,6 +52,7 @@ websocketServer.on('connection', (ws: WebSocketWithId) => {
 
       case 'attack':
         handleAttack(message, ws);
+        handleTurn(ws);
         break;
 
       case 'finish':
