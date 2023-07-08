@@ -42,7 +42,7 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
       setTimeout(checkFlag, 1000);
     } else {
       roomUsersWsArr.forEach((user) => {
-        console.log(user.id + '----' + usersWithShips.get(user.id))
+        console.log(user.id + '----' + usersWithShips.get(user.id));
         ws.send(
           JSON.stringify({
             type: 'start_game',
@@ -52,8 +52,17 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
             }),
             id: 0,
           }),
-        )},
-      );
+        );
+        ws.send(
+          JSON.stringify({
+            type: 'turn',
+            data: JSON.stringify({
+              currentPlayer: 1,
+            }),
+            id: 0,
+          }),
+        );
+      });
     }
   }
   checkFlag();
@@ -78,8 +87,9 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
 
   roomUsersWsArr.forEach((user) => {
     const enemy = roomUsersWsArr.filter((u) => u.id !== user.id)[0];
-
-    user.send( //change back to user.send
+    const status = checkIfHit(usersWithShips.get(enemy.id), x, y);
+    user.send(
+      //change back to user.send
       JSON.stringify({
         type: 'attack',
         data: JSON.stringify({
@@ -88,7 +98,19 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
             y: y,
           },
           currentPlayer: getUser(user.id)?.index, // getUser(ws.id)?.index,
-          status: checkIfHit(usersWithShips.get(enemy.id), x, y),
+          status: status,
+        }),
+        id: 0,
+      }),
+    );
+    const nextPlayerToShoot: number | undefined =
+      status === 'shot' ? getUser(user.id)?.index : getUser(enemy.id)?.index;
+    console.log('nextPlayerToShoot is: ' + nextPlayerToShoot);
+    user.send(
+      JSON.stringify({
+        type: 'turn',
+        data: JSON.stringify({
+          currentPlayer: nextPlayerToShoot,
         }),
         id: 0,
       }),
