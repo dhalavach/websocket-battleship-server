@@ -1,16 +1,12 @@
 import { httpServer } from './src/http_server/index.js';
-import { createWebSocketStream, WebSocket, WebSocketServer } from 'ws';
-import { parseData } from './src/helpers.ts';
+import {  WebSocketServer } from 'ws';
 import {
   handleAddShips,
   handleAttack,
   handleFinish,
-  handleTurn,
 } from './src/controllers/gameController.ts';
-import { v4 as uuidv4 } from 'uuid';
-import { Ship, User, WebSocketWithId } from './src/types.ts';
+import {WebSocketWithId } from './src/types.ts';
 import { registerUser } from './src/controllers/userController.ts';
-import { usersInGame } from './src/models/gameModel.ts';
 import {
   addUsersToRoom,
   createRoom,
@@ -21,7 +17,7 @@ console.log(`Start static http server on the ${HTTP_PORT} port!`);
 httpServer.listen(HTTP_PORT);
 
 console.log('start ws server');
-const WS_PORT = 8080;
+//const WS_PORT = 8080;
 
 export const websocketServer = new WebSocketServer({
   server: httpServer,
@@ -52,7 +48,9 @@ websocketServer.on('connection', (ws: WebSocketWithId) => {
 
       case 'attack':
         handleAttack(message, ws);
-        handleTurn(ws);
+        break;
+      
+      case 'turn':
         break;
 
       case 'finish':

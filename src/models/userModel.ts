@@ -1,55 +1,19 @@
-// export class User {
-//   name: string;
-//   password: string;
-//   victories: number;
-//   ships?: [];
-
 import { User } from '../types.ts';
+import { users } from '../db/userDb.ts';
 
-//   constructor(name: string, password: string) {
-//     this.name = name;
-//     this.password = password;
-//     this.victories = 0;
-//   }
-// }
+// export const playerIndices = new Map();
+// users.map((user, index) => playerIndices.set(user.name, index));
 
-// export class Database {
-//   users: User[];
-
-//   constructor() {
-//     this.users = [];
-//   }
-
-//   addUser(name: string, password: string) {
-//     if (this.users.find((user) => user.name === name)) return;
-//     const user = new User(name, password);
-//     this.users.push(user);
-//     return user;
-//   }
-
-//   getUser(name: string) {
-//     return this.users.find((user) => user.name === name);
-//   }
-
-//   validate(name: string, password: string): boolean {
-//     const user = this.users.find((user) => user.name === name);
-//     if (user && user.password === password) return true;
-//     return false;
-//   }
-// }
-
-export const users: User[] = [];
-export const playerIndices = new Map();
-users.map((user, index) => playerIndices.set(user.name, index));
-
-export const validate = (name: string, password: string, users: User[]) => {
+export const validate = (name: string, password: string): boolean => {
   const user = users.find((user) => user.name === name);
   if (user && user.password === password) return true;
   return false;
 };
 
-export const addUser = (name: string, password: string, users: User[]) => {
-  const user = {
+export const addUser = (name: string, password: string): User | null => {
+  if (users.find((user) => user.name === name)) return null;
+  const user: User = {
+    index: users.length + 1,
     name,
     password,
     victories: 0,
@@ -58,6 +22,6 @@ export const addUser = (name: string, password: string, users: User[]) => {
   return user;
 };
 
-export const getUser = (name: string, users: User[]) => {
+export const getUser = (name: string): User | undefined => {
   return users.find((user) => user.name === name);
 };

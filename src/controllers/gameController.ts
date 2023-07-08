@@ -6,19 +6,23 @@ import {
   usersInGame,
 } from './../models/gameModel.ts';
 import { Ship, User, WebSocketWithId } from '../types.ts';
-import { users, playerIndices } from '../models/userModel.ts';
+import { users } from '../db/userDb.ts';
+import { getUser } from '../models/userModel.ts';
+import { websocketServer } from '../../index.ts';
+import { rooms } from '../db/roomDb.ts';
+import { roomUsersWsArr } from '../models/roomModel.ts';
 
-// export const setUserShips = (user: User, ships: Ship[]) => {
-//   usersWithShips.set(user.name, ships);
-// };
+let shipPlacementCounter = 0;
 
 export const handleAddShips = (message: string, ws: WebSocketWithId) => {
-  console.log('message on add ships: ' + message);
+  console.log(ws.id);
+
+  shipPlacementCounter++;
+
   const ships = JSON.parse(JSON.parse(message).data).ships;
-  const gameId = JSON.parse(JSON.parse(message).data).gameId;
-  const player = JSON.parse(JSON.parse(message).data).indexPlayer;
-  console.log('indexPlayer: ' + player);
-  console.log('ws id: ' + ws.id);
+  const indexPlayer = JSON.parse(JSON.parse(message).data).indexPlayer;
+  console.log('index player from add ships message ' + indexPlayer);
+  console.log('ws id from add ships: ' + ws.id);
 
   const shipsWithHitCapacity = ships.map((ship: Ship) => {
     return {
@@ -31,70 +35,51 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
       hitCapacity: ship.length,
     };
   });
-
-  console.log('player name before setting the ships: ' + ws.id);
-
   usersWithShips.set(ws.id, shipsWithHitCapacity);
 
-  // mockShips = shipsWithHitCapacity;
-  // users[indexPlayer].ships = mockShips;
-
-  ws.send(
-    JSON.stringify({
-      type: 'start_game',
-      data: JSON.stringify({
-        ships: ships,
-        currentPlayerIndex: playerIndices.get(ws.id),
-      }),
-      id: 0,
-    }),
-  );
-
-  ws.send(
-    JSON.stringify({
-      type: 'turn',
-      data: JSON.stringify({
-        currentPlayer: playerIndices.get(ws.id),
-      }),
-      id: 0,
-    }),
-  );
-
-  // websocketServer.clients.forEach((client: WebSocket) => {
-  //   if (client.readyState === WebSocket.OPEN) {
-  //     client.send(
-  //       JSON.stringify({
-  //         type: 'start_game',
-  //         data: JSON.stringify({
-  //           ships: mockShips,
-  //           currentPlayerIndex: 1,
-  //         }),
-  //         id: 0,
-  //       }),
-  //     );
-  //   }
-  // });
+  function checkFlag() {
+    if (shipPlacementCounter !== 2) {
+      setTimeout(checkFlag, 1000);
+    } else {
+      roomUsersWsArr.forEach((user) => {
+        console.log(user.id + '----' + usersWithShips.get(user.id))
+        ws.send(
+          JSON.stringify({
+            type: 'start_game',
+            data: JSON.stringify({
+              ships: usersWithShips.get(user.id),
+              currentPlayerIndex: getUser(user.id)?.index, // change back to user.id,
+            }),
+            id: 0,
+          }),
+        )},
+      );
+    }
+  }
+  checkFlag();
 };
 
-export const handleAttack = (message: string, ws: WebSocketWithId) => {
-  console.log('message on attack: ' + message);
-  const player = JSON.parse(JSON.parse(message).data).indexPlayer;
-  console.log('player name: ' + ws.id);
-  console.log('users in game: ' + usersInGame.map((u) => u.name));
-  const opponent = users.filter((user) => user.name !== ws.id)[0];
-  if (opponent) console.log('opponent: ' + opponent.name);
-  console.log(
-    'player ships from users with ships map : ' + usersWithShips.get(ws.id),
-  );
-  // console.log(
-  //   'opponent ships from users with ships map : ' +
-  //     usersWithShips.get(opponent),
-  // );
+// roomUsersWsArr.forEach((user) =>
+//   user.send(
+//     JSON.stringify({
+//       type: 'turn',
+//       data: JSON.stringify({
+//         currentPlayer: currentPlayer, // getUser(ws.id)?.index,
+//       }),
+//       id: 0,
+//     }),
+//   ),
+// );
 
+export const handleAttack = (message: string, ws: WebSocketWithId) => {
+  console.log('message on attack:' + JSON.parse(message).data);
   const x = JSON.parse(JSON.parse(message).data).x;
   const y = JSON.parse(JSON.parse(message).data).y;
-  try {
-    ws.send(
+
+  roomUsersWsArr.forEach((user) => {
+    const enemy = roomUsersWsArr.filter((u) => u.id !== user.id)[0];
+
+    user.send( //change back to user.send
       JSON.stringify({
         type: 'attack',
         data: JSON.stringify({
@@ -102,24 +87,24 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
             x: x,
             y: y,
           },
-          currentPlayer: playerIndices.get(ws.id), //change this back to ws.id
-          status: checkIfHit(usersWithShips.get(opponent.name), x, y),
+          currentPlayer: getUser(user.id)?.index, // getUser(ws.id)?.index,
+          status: checkIfHit(usersWithShips.get(enemy.id), x, y),
         }),
         id: 0,
       }),
     );
-  } catch (err) {
-    console.log(err);
-  }
+  });
 
-  // ws.send(
-  //   JSON.stringify({
-  //     type: 'turn',
-  //     data: JSON.stringify({
-  //       currentPlayer: opponent,
+  // roomUsersWsArr.forEach((user) =>
+  //   user.send(
+  //     JSON.stringify({
+  //       type: 'turn',
+  //       data: JSON.stringify({
+  //         currentPlayer: currentPlayer,
+  //       }),
+  //       id: 0,
   //     }),
-  //     id: 0,
-  //   }),
+  //   ),
   // );
   // if (checkLoseConditions(usersWithShips.get(player.name))) {
   //   ws.send(
@@ -134,21 +119,36 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
   // }
 };
 
-export const handleTurn = (ws: WebSocketWithId) => {
-  const opponent = users.filter((user) => user.name !== ws.id)[0];
-  console.log('player name from handleTurn: ' + ws.id);
-  console.log('opp name from handleTurn: ' + opponent.name);
-  console.log('playerIndices from handleTurn: ' + playerIndices);
-  ws.send(
-    JSON.stringify({
-      type: 'turn',
-      data: JSON.stringify({
-        currentPlayer: playerIndices.get(opponent.name),
-      }),
-      id: 0,
-    }),
-  );
-};
+// export const handleTurn = (ws: WebSocketWithId) => {
+//   currentPlayer = getUser(roomUsersWsArr[1].id)?.index;
+//   opponent = currentPlayer === 1 ? 2 : 1;
+//   opponentName = roomUsersWsArr[opponent].id;
+//   roomUsersWsArr.forEach((user) =>
+//     user.send(
+//       JSON.stringify({
+//         type: 'turn',
+//         data: JSON.stringify({
+//           currentPlayer: currentPlayer,
+//         }),
+//         id: 0,
+//       }),
+//     ),
+//   );
+//   // const opponent = users.filter((user) => user.name !== ws.id)[0];
+//   // console.log('player name from handleTurn: ' + ws.id);
+//   // console.log('opp name from handleTurn: ' + opponent.name);
+//   // roomUsersWsArr.forEach((user) =>
+//   //   user.send(
+//   //     JSON.stringify({
+//   //       type: 'turn',
+//   //       data: JSON.stringify({
+//   //         currentPlayer: getUser(opponent.name)?.index,
+//   //       }),
+//   //       id: 0,
+//   //     }),
+//   //   ),
+//   // );
+// };
 
 export const handleFinish = (ws: WebSocketWithId) => {
   ws.send(

@@ -1,5 +1,5 @@
 import { User, Hit, Ship } from './../types.ts';
-import { users } from './userModel.ts';
+import { users } from '../db/userDb.ts';
 export let activeUserName: string;
 export const usersInGame: User[] = [];
 const hitsOfShips = new Set();
