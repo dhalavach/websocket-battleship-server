@@ -25,3 +25,8 @@ export const addUser = (name: string, password: string): User | null => {
 export const getUser = (name: string): User | undefined => {
   return users.find((user) => user.name === name);
 };
+
+export const updateVictoryCount = (name: string): void => {
+  const winnerIndex: number = users.findIndex((user) => user.name === name);
+  users[winnerIndex].victories++;
+};

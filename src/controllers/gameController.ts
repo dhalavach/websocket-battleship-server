@@ -7,10 +7,10 @@ import {
 } from './../models/gameModel.ts';
 import { Ship, User, WebSocketWithId } from '../types.ts';
 import { users } from '../db/userDb.ts';
-import { getUser } from '../models/userModel.ts';
+import { getUser, updateVictoryCount } from '../models/userModel.ts';
 import { websocketServer } from '../../index.ts';
 import { rooms } from '../db/roomDb.ts';
-import { roomUsersWsArr } from '../models/roomModel.ts';
+import { roomUsersWsArr, clearRoom } from '../models/roomModel.ts';
 
 let shipPlacementCounter = 0;
 
@@ -115,6 +115,52 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       }),
     );
   });
+  const enemy = roomUsersWsArr.filter((u) => u.id !== ws.id)[0];
+
+  if (checkLoseConditions(usersWithShips.get(enemy.id))) {
+    updateVictoryCount(ws.id);
+    roomUsersWsArr.forEach((user) =>
+      user.send(
+        JSON.stringify({
+          type: 'finish',
+          data: JSON.stringify({
+            winPlayer: getUser(ws.id)?.index,
+          }),
+          id: 0,
+        }),
+      ),
+    );
+
+    const updWinners = JSON.stringify({
+      type: 'update_winners',
+      data: [
+        {
+          name: ws.id,
+          wins: getUser(ws.id)?.victories,
+        },
+      ],
+      id: 0,
+    });
+    roomUsersWsArr.forEach((client: WebSocket) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(updWinners);
+      }
+    });
+
+    //refactor and fix
+    clearRoom();
+    const resp = JSON.stringify({
+      type: 'update_room',
+      data: JSON.stringify([]),
+      id: 0,
+    });
+
+    roomUsersWsArr.forEach((client: WebSocket) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(resp);
+      }
+    });
+  }
 };
 
 export const handleFinish = (ws: WebSocketWithId) => {
@@ -122,7 +168,7 @@ export const handleFinish = (ws: WebSocketWithId) => {
     JSON.stringify({
       type: 'finish',
       data: JSON.stringify({
-        winPlayer: ws.id,
+        winPlayer: getUser(ws.id)?.index,
       }),
       id: 0,
     }),

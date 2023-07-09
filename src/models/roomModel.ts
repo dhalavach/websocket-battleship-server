@@ -29,3 +29,7 @@ export const updateListOfRooms = (ws: WebSocketWithId) => {
 };
 
 export const roomUsersWsArr: WebSocketWithId[] = [];
+
+export const clearRoom = () => {
+  rooms.clear;
+}

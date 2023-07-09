@@ -1,7 +1,6 @@
 import { writeFile } from 'fs/promises';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { User, Hit, Ship } from './types.ts';
 import { WebSocket } from 'ws';
 
 const __filename = fileURLToPath(import.meta.url);
