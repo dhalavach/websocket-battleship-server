@@ -4,7 +4,7 @@ import { User, WebSocketWithId } from '../types.ts';
 import { validate, getUser, addUser } from '../models/userModel.ts';
 import { users } from '../db/userDb.ts';
 import { rooms } from '../db/roomDb.ts';
-import { updateListOfRooms } from '../models/roomModel.ts';
+import { getListOfRooms } from '../controllers/roomController.ts';
 
 export const registerUser = (message: string, ws: WebSocketWithId) => {
   const name = JSON.parse(JSON.parse(message).data).name;
@@ -24,7 +24,7 @@ export const registerUser = (message: string, ws: WebSocketWithId) => {
         }),
       }),
     );
-    updateListOfRooms(ws);
+    getListOfRooms(ws);
   } else {
     if (validate(name, password)) {
       ws.id = name;
@@ -39,7 +39,7 @@ export const registerUser = (message: string, ws: WebSocketWithId) => {
           }),
         }),
       );
-      updateListOfRooms(ws);
+      getListOfRooms(ws);
     } else {
       ws.id = '';
       ws.send(

@@ -3,19 +3,20 @@ import {
   checkIfHit,
   checkLoseConditions,
   usersWithShips,
-  usersInGame,
 } from './../models/gameModel.ts';
 import { Ship, User, WebSocketWithId } from '../types.ts';
 import { users } from '../db/userDb.ts';
 import { getUser, updateVictoryCount } from '../models/userModel.ts';
 import { websocketServer } from '../../index.ts';
 import { rooms } from '../db/roomDb.ts';
-import { roomUsersWsArr, clearRoom } from '../models/roomModel.ts';
+import { clearRoom } from '../models/roomModel.ts';
+import { getListOfRooms } from './roomController.ts';
 
 let shipPlacementCounter = 0;
 
 export const handleAddShips = (message: string, ws: WebSocketWithId) => {
   console.log(ws.id);
+  console.log('message on add ships: ' + JSON.parse(message).data);
 
   shipPlacementCounter++;
 
@@ -38,10 +39,11 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
   usersWithShips.set(ws.id, shipsWithHitCapacity);
 
   function checkFlag() {
-    if (shipPlacementCounter !== 2) {
+    if (shipPlacementCounter < 2) {
       setTimeout(checkFlag, 1000);
     } else {
-      roomUsersWsArr.forEach((user) => {
+      const playersInGame = rooms.get(rooms.size)?.users; // refactor use room id from the message
+      playersInGame?.forEach((user) => {
         console.log(user.id + '----' + usersWithShips.get(user.id));
         user.send(
           // change to ws
@@ -70,13 +72,20 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
 };
 
 export const handleAttack = (message: string, ws: WebSocketWithId) => {
-  console.log('message on attack:' + JSON.parse(message).data);
+  console.log(
+    'gameId from message on attack:' +
+      JSON.parse(JSON.parse(message).data).gameId,
+  );
   const x = JSON.parse(JSON.parse(message).data).x;
   const y = JSON.parse(JSON.parse(message).data).y;
+  const playersInGame = rooms.get(
+    JSON.parse(JSON.parse(message).data).gameId,
+  )?.users;
+  console.log('players in game: ' + playersInGame?.map((p) => p.id));
 
-  roomUsersWsArr.forEach((user) => {
-    const enemy = roomUsersWsArr.filter((u) => u.id !== ws.id)[0];
-    const status = checkIfHit(usersWithShips.get(enemy.id), x, y);
+  playersInGame?.forEach((user) => {
+    const enemy = playersInGame.filter((u) => u.id !== ws.id)[0];
+    const status = checkIfHit(usersWithShips.get(enemy?.id) as Ship[], x, y);
     const currentPlayer = JSON.parse(JSON.parse(message).data).indexPlayer;
     console.log('currentPlayer:  ' + currentPlayer);
 
@@ -115,11 +124,18 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       }),
     );
   });
-  const enemy = roomUsersWsArr.filter((u) => u.id !== ws.id)[0];
-
-  if (checkLoseConditions(usersWithShips.get(enemy.id))) {
+  const enemy = playersInGame?.filter((u) => u.id !== ws.id)[0];
+  console.log('enemy id: ' + enemy?.id);
+  console.log(
+    'userwithships enemy before checking lose conditions: ' +
+      usersWithShips.get(enemy?.id as string)?.map((ship) => ship.hitCapacity),
+  );
+  if (checkLoseConditions(usersWithShips.get(enemy?.id as string))) {
     updateVictoryCount(ws.id);
-    roomUsersWsArr.forEach((user) =>
+    // usersWithShips.clear(); // added to let 2nd game finish ?
+    // clearRoom();
+
+    playersInGame?.forEach((user) =>
       user.send(
         JSON.stringify({
           type: 'finish',
@@ -131,35 +147,28 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       ),
     );
 
-    const updWinners = JSON.stringify({
-      type: 'update_winners',
-      data: [
-        {
-          name: ws.id,
-          wins: getUser(ws.id)?.victories,
-        },
-      ],
-      id: 0,
-    });
-    roomUsersWsArr.forEach((client: WebSocket) => {
+    websocketServer.clients?.forEach((client: WebSocket) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(updWinners);
+        const tempUsersVictoriesArr: any[] = [];
+        users.forEach((user) =>
+          tempUsersVictoriesArr.push({
+            name: user.name,
+            wins: user.victories,
+          }),
+        );
+        client.send(
+          JSON.stringify({
+            type: 'update_winners',
+            data: JSON.stringify(tempUsersVictoriesArr),
+            id: 0,
+          }),
+        );
       }
     });
 
     //refactor and fix
-    clearRoom();
-    const resp = JSON.stringify({
-      type: 'update_room',
-      data: JSON.stringify([]),
-      id: 0,
-    });
-
-    roomUsersWsArr.forEach((client: WebSocket) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(resp);
-      }
-    });
+    // clearRoom();
+    //getListOfRooms(ws);
   }
 };
 

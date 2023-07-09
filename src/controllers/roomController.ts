@@ -1,14 +1,11 @@
 import WebSocket from 'ws';
-import { usersInGame } from '../models/gameModel.ts';
 import { users } from '../db/userDb.ts';
 import { websocketServer } from '../../index.ts';
 import { WebSocketWithId } from '../types.ts';
 import { getUser } from '../models/userModel.ts';
 import { rooms } from '../db/roomDb.ts';
-import { roomUsersWsArr } from '../models/roomModel.ts';
 
 export const createRoom = (message: string, ws: WebSocketWithId) => {
-  roomUsersWsArr.push(ws);
   const roomUsersObjArr = [
     {
       name: ws.id,
@@ -16,14 +13,15 @@ export const createRoom = (message: string, ws: WebSocketWithId) => {
     },
   ];
   const id = rooms.size + 1;
-  const roomUsersStringArr = roomUsersObjArr.map((u) => u.name);
+  const roomUsersWsArray = [];
+  roomUsersWsArray.push(ws)
   const roomData = { roomId: id, roomUsers: roomUsersObjArr };
   const tempRoomsArr = [];
   tempRoomsArr.push(roomData);
 
   const room = {
     id,
-    users: roomUsersStringArr,
+    users: roomUsersWsArray,
   };
   rooms.set(id, room);
 
@@ -41,34 +39,46 @@ export const createRoom = (message: string, ws: WebSocketWithId) => {
   });
 };
 
+
 export const addUsersToRoom = (message: string, ws: WebSocketWithId) => {
-  if (roomUsersWsArr[0].id !== ws.id) roomUsersWsArr.push(ws);
+  const indexRoom = JSON.parse(JSON.parse(message).data).indexRoom || 1 // refactor
+  const roomCreator = rooms.get(indexRoom)?.users[0] || ws //  v. bad
+  if (roomCreator?.id !== ws.id) {
+    const newUsersArr = [];
+    newUsersArr.push(roomCreator);
+    newUsersArr.push(ws);
+    const newRoom = {
+      id: indexRoom,
+      users: newUsersArr
+    }
+rooms.set(indexRoom, newRoom)
+  }
   console.log('message on add to room: ' + message);
-  const userToAdd = users.find((user) => user.name === ws.id);
+  // const userToAdd = users.find((user) => user.name === ws.id);
   // if (userToAdd) usersInGame.push(userToAdd);
-  console.log('users: ' + users.map((user) => user.name));
+  // console.log('users: ' + users.map((user) => user.name));
   // console.log('users in game: ' + usersInGame.map((user) => user.name));
 
-  const roomId = JSON.parse(JSON.parse(message).data).indexRoom;
+  // const roomId = JSON.parse(JSON.parse(message).data).indexRoom;
 
-  const newRoomUsersStringArr = rooms.get(roomId)?.users || [];
-  if (userToAdd && newRoomUsersStringArr)
-    newRoomUsersStringArr.push(userToAdd.name);
-  const updatedRoom = {
-    id: roomId,
-    users: newRoomUsersStringArr,
-  };
-  rooms.set(roomId, updatedRoom);
+  // const newRoomUsersStringArr = rooms.get(roomId)?.users || [];
+  // if (userToAdd && newRoomUsersStringArr)
+  //   newRoomUsersStringArr.push(userToAdd.name);
+  // const updatedRoom = {
+  //   id: roomId,
+  //   users: newRoomUsersStringArr,
+  // };
+  // rooms.set(roomId, updatedRoom);
 
-  console.log('parsed roomId: ' + roomId);
+  // console.log('parsed roomId: ' + roomId);
 
-
-  roomUsersWsArr.forEach((user: WebSocketWithId) => {
+  const usersInGame = rooms.get(indexRoom)?.users
+  usersInGame?.forEach((user: WebSocketWithId) => {
     user.send(
       JSON.stringify({
         type: 'create_game',
         data: JSON.stringify({
-          idGame: roomId,
+          idGame: indexRoom,
           idPlayer: getUser(user.id)?.index,
         }),
         id: 0,
@@ -76,5 +86,40 @@ export const addUsersToRoom = (message: string, ws: WebSocketWithId) => {
     );
   });
 
-  // ws.send(response);
+};
+
+
+
+
+
+export const getListOfRooms = (ws: WebSocketWithId) => {
+
+  console.log(rooms);
+  if (rooms.size > 0) {
+    // const name = rooms.get(1)?.users[0] || '';
+    // const roomUsersObjArr = [
+    //   {
+    //     name: ws.id,
+    //     index: getUser(ws.id)?.index,
+    //   },
+    // ];
+    
+    const tempRoomsArr: any[] = [];
+
+    //const roomData = { roomId: 1, roomUsers: roomUsersObjArr };
+    rooms.forEach((value, key) => {
+      tempRoomsArr.push({
+        roomId: key,
+        roomUsers: value.users,
+      })
+    })
+
+    const resp = JSON.stringify({
+      type: 'update_room',
+      data: JSON.stringify(tempRoomsArr),
+      id: 0,
+    });
+
+    ws.send(resp);
+  }
 };

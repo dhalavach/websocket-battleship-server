@@ -1,9 +1,9 @@
 import { User, Hit, Ship } from './../types.ts';
 import { users } from '../db/userDb.ts';
 export let activeUserName: string;
-export const usersInGame: User[] = [];
+// export const usersInGame: User[] = [];
 const hitsOfShips = new Set();
-export const usersWithShips = new Map();
+export const usersWithShips: Map<string, Ship[]> = new Map();
 
 export const checkIfHit = (ships: Ship[], x: number, y: number): Hit => {
   function check(ship: Ship) {
@@ -26,6 +26,9 @@ export const checkIfHit = (ships: Ship[], x: number, y: number): Hit => {
   return ships.some(check) ? 'shot' : 'miss';
 };
 
-export const checkLoseConditions = (shipsWithHitCapacity: Ship[]) => {
+export const checkLoseConditions = (
+  shipsWithHitCapacity: Ship[] | undefined,
+) => {
+  if (!shipsWithHitCapacity) return null;
   return shipsWithHitCapacity.every((ship) => ship.hitCapacity === 0);
 };
