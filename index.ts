@@ -63,6 +63,11 @@ websocketServer.on('connection', (ws: WebSocketWithId) => {
         handleAttack(message, ws);
         break;
 
+      case 'randomAttack':
+        console.log('random attack handled');
+        handleAttack(message, ws);
+        break;
+
       case 'turn':
         break;
 
