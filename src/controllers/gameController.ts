@@ -86,7 +86,7 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
   const y = JSON.parse(JSON.parse(message).data).y;
 
   roomUsersWsArr.forEach((user) => {
-    const enemy = roomUsersWsArr.filter((u) => u.id !== user.id)[0];
+    const enemy = roomUsersWsArr.filter((u) => u.id !== ws.id)[0];
     const status = checkIfHit(usersWithShips.get(enemy.id), x, y);
     user.send(
       //change back to user.send
@@ -97,14 +97,14 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
             x: x,
             y: y,
           },
-          currentPlayer: getUser(user.id)?.index, // getUser(ws.id)?.index,
+          currentPlayer: getUser(ws.id)?.index, // getUser(ws.id)?.index,
           status: status,
         }),
         id: 0,
       }),
     );
     const nextPlayerToShoot: number | undefined =
-      status === 'shot' ? getUser(user.id)?.index : getUser(enemy.id)?.index;
+      status === 'shot' ? getUser(ws.id)?.index : getUser(enemy.id)?.index;
     console.log('nextPlayerToShoot is: ' + nextPlayerToShoot);
     user.send(
       JSON.stringify({

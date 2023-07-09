@@ -1,29 +1,42 @@
 import { httpServer } from './src/http_server/index.js';
-import {  WebSocketServer } from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import {
   handleAddShips,
   handleAttack,
   handleFinish,
 } from './src/controllers/gameController.ts';
-import {WebSocketWithId } from './src/types.ts';
+import { WebSocketWithId } from './src/types.ts';
 import { registerUser } from './src/controllers/userController.ts';
 import {
   addUsersToRoom,
   createRoom,
 } from './src/controllers/roomController.ts';
+import dotenv from 'dotenv';
 
-const HTTP_PORT = 3000;
-console.log(`Start static http server on the ${HTTP_PORT} port!`);
-httpServer.listen(HTTP_PORT);
+dotenv.config();
 
+const PORT = Number(process.env.PORT) || 3000;
+console.log(`Start server on the ${PORT} port!`);
+httpServer.listen(PORT);
 console.log('start ws server');
-//const WS_PORT = 8080;
 
 export const websocketServer = new WebSocketServer({
   server: httpServer,
 });
 
+const interval: ReturnType<typeof setInterval> = setInterval(function ping() {
+  websocketServer.clients.forEach((ws: any) => {
+    if (!ws.isAlive) return ws.terminate();
+    // ws.isAlive = false;
+    ws.ping();
+  });
+}, 1000);
+
 websocketServer.on('connection', (ws: WebSocketWithId) => {
+  ws.isAlive = true;
+
+  ws.on('error', console.error);
+
   console.log(
     'number of websocket server clients: ' + websocketServer.clients.size,
   );
@@ -49,7 +62,7 @@ websocketServer.on('connection', (ws: WebSocketWithId) => {
       case 'attack':
         handleAttack(message, ws);
         break;
-      
+
       case 'turn':
         break;
 
@@ -65,6 +78,12 @@ websocketServer.on('connection', (ws: WebSocketWithId) => {
 });
 
 process.on('SIGINT', () => {
+  clearInterval(interval);
+  websocketServer.clients.forEach((client: WebSocket) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.close();
+    }
+  });
   httpServer.close();
   websocketServer.close();
   process.exit();

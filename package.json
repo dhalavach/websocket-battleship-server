@@ -7,8 +7,8 @@
   "scripts": {
     "start:experimental": "npx nodemon",
     "build": "npx tsc",
-    "start": "node ./index.js",
-    "start:dev": "nodemon ./index.js",
+    "start": "ts-node ./index.ts",
+    "start:dev": "nodemon ./index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npx eslint ./src",
     "format": "npx eslint ./src --fix"
@@ -31,7 +31,6 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "@nut-tree/nut-js": "^2.3.0",
     "uuid": "^9.0.0",
     "ws": "^8.8.0"
   }

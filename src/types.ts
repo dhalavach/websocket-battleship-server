@@ -31,4 +31,5 @@ export type Ship = {
 
 export type WebSocketWithId = WebSocket & {
   id: string;
+  isAlive: boolean;
 };
