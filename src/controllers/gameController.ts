@@ -3,6 +3,7 @@ import {
   checkIfHit,
   checkLoseConditions,
   usersWithShips,
+  hitsOfShips
 } from './../models/gameModel.ts';
 import { Ship, User, WebSocketWithId } from '../types.ts';
 import { users } from '../db/userDb.ts';
@@ -85,7 +86,7 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
 
   playersInGame?.forEach((user) => {
     const enemy = playersInGame.filter((u) => u.id !== ws.id)[0];
-    const status = checkIfHit(usersWithShips.get(enemy?.id) as Ship[], x, y);
+    const status = checkIfHit(enemy.id, usersWithShips.get(enemy?.id) as Ship[], x, y);
     const currentPlayer = JSON.parse(JSON.parse(message).data).indexPlayer;
     console.log('currentPlayer:  ' + currentPlayer);
 
@@ -131,6 +132,8 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       usersWithShips.get(enemy?.id as string)?.map((ship) => ship.hitCapacity),
   );
   if (checkLoseConditions(usersWithShips.get(enemy?.id as string))) {
+    usersWithShips.clear();
+    hitsOfShips.clear();
     updateVictoryCount(ws.id);
     // usersWithShips.clear(); // added to let 2nd game finish ?
     // clearRoom();
@@ -167,6 +170,7 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
     });
 
     //refactor and fix
+    // usersWithShips.clear();
     // clearRoom();
     //getListOfRooms(ws);
   }

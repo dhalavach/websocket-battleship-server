@@ -2,10 +2,10 @@ import { User, Hit, Ship } from './../types.ts';
 import { users } from '../db/userDb.ts';
 export let activeUserName: string;
 // export const usersInGame: User[] = [];
-const hitsOfShips = new Set();
+export const hitsOfShips: Map<string, Set<string>> = new Map();
 export const usersWithShips: Map<string, Ship[]> = new Map();
 
-export const checkIfHit = (ships: Ship[], x: number, y: number): Hit => {
+export const checkIfHit = (user: string, ships: Ship[], x: number, y: number): Hit => {
   function check(ship: Ship) {
     const lengthX = ship.direction === false ? ship.length - 1 : 0;
     const lengthY = ship.direction === true ? ship.length - 1 : 0;
@@ -15,8 +15,10 @@ export const checkIfHit = (ships: Ship[], x: number, y: number): Hit => {
       y >= ship.position.y &&
       y <= ship.position.y + lengthY
     ) {
-      if (!hitsOfShips.has(`${x}*${y}`) && ship.hitCapacity) ship.hitCapacity--;
-      hitsOfShips.add(`${x}*${y}`);
+      if (!(hitsOfShips?.get(user))?.has(`${x}*${y}`) && ship.hitCapacity) ship.hitCapacity--;
+       const oldHits = hitsOfShips.get(user)
+      const newHits = oldHits?.add(`${x}*${y}`);
+      hitsOfShips.set(user, newHits as Set<string>)
       return true;
     } else {
       return false;
