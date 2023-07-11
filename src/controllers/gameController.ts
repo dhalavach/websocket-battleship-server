@@ -1,5 +1,6 @@
 import { WebSocket } from 'ws';
 import {
+  gameData,
   checkIfHit,
   checkLoseConditions,
   usersWithShips,
@@ -11,15 +12,17 @@ import { getUser, updateVictoryCount } from '../models/userModel.ts';
 import { websocketServer } from '../../index.ts';
 import { rooms } from '../db/roomDb.ts';
 
-let shipPlacementCounter = 0;
-let activePlayerIndex = 0;
-
 export const handleAddShips = (message: string, ws: WebSocketWithId) => {
-  shipPlacementCounter++;
-
   const ships = JSON.parse(JSON.parse(message).data).ships;
-  const gameId = JSON.parse(JSON.parse(message).data).gameId;
+  const gameId = JSON.parse(JSON.parse(message).data).gameId as number;
   const indexPlayer = JSON.parse(JSON.parse(message).data).indexPlayer;
+  let counter: number | undefined = gameData.get(gameId)?.shipPlacementCounter;
+  if (counter) counter++;
+  else counter = 1;
+  gameData.set(gameId, {
+    shipPlacementCounter: counter,
+    activePlayerIndex: 0,
+  });
 
   const shipsWithHitCapacity = ships.map((ship: Ship) => {
     return {
@@ -35,7 +38,7 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
   usersWithShips.set(ws.id, shipsWithHitCapacity);
 
   function checkFlag() {
-    if (shipPlacementCounter !== 2) {
+    if (gameData.get(gameId)?.shipPlacementCounter !== 2) {
       setTimeout(checkFlag, 1000);
     } else {
       const playersInGame = rooms.get(gameId)?.users;
@@ -50,9 +53,13 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
             id: 0,
           }),
         );
-
-        activePlayerIndex = indexPlayer;
-        console.log('activePlayerIndex: ' + activePlayerIndex);
+        const data = gameData.get(gameId) || {
+          shipPlacementCounter: 0,
+          activePlayerIndex: 0,
+        };
+        if (data)
+          data.activePlayerIndex = indexPlayer;
+        gameData.set(gameId, data);
         ws.send(
           JSON.stringify({
             type: 'turn',
@@ -69,106 +76,111 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
 };
 
 export const handleAttack = (message: string, ws: WebSocketWithId) => {
-  console.log('activePlayerIndex from handleAttack: ' + activePlayerIndex);
+  const gameId = JSON.parse(JSON.parse(message).data).gameId;
+  const x = JSON.parse(JSON.parse(message).data).x;
+  const y = JSON.parse(JSON.parse(message).data).y;
+  const playersInGame = rooms.get(gameId)?.users;
+  const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
 
-  if (true) {
-    const x = JSON.parse(JSON.parse(message).data).x;
-    const y = JSON.parse(JSON.parse(message).data).y;
-    const playersInGame = rooms.get(
-      JSON.parse(JSON.parse(message).data).gameId,
-    )?.users;
-    const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
+  if (indexPlayer === gameData.get(gameId)?.activePlayerIndex) {
+    playersInGame?.forEach((user) => {
+      //const enemy = playersInGame?.[+!!!activePlayerIndex] as WebSocketWithId; //will work after shoot in turn only
+      const enemy: WebSocketWithId = playersInGame.filter(
+        (u) => u.id !== ws.id,
+      )[0];
 
-    if (indexPlayer === activePlayerIndex) {
-      playersInGame?.forEach((user) => {
-        //const enemy = playersInGame?.[+!!!activePlayerIndex] as WebSocketWithId; //will work after shoot in turn only
-        const enemy: WebSocketWithId = playersInGame.filter((u) => u.id !== ws.id)[0];
+      const indexPlayer: number = JSON.parse(
+        JSON.parse(message).data,
+      ).indexPlayer;
+      const status: Hit | undefined = checkIfHit(
+        enemy.id,
+        usersWithShips.get(enemy.id) as Ship[],
+        x,
+        y,
+      );
+      const nextPlayerToShoot: number =
+        status === 'shot' ? indexPlayer : (getUser(enemy.id)?.index as number); //activePlayerIndex : +!!!activePlayerIndex;
 
-        const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
-        const status: Hit | undefined = checkIfHit(
-          enemy.id,
-          usersWithShips.get(enemy.id) as Ship[],
-          x,
-          y,
-        );
-        const nextPlayerToShoot: number =
-          status === 'shot'
-            ? (indexPlayer)
-            : (getUser(enemy.id)?.index as number); //activePlayerIndex : +!!!activePlayerIndex;
-
-        activePlayerIndex = nextPlayerToShoot;
-
-        user.send(
-          JSON.stringify({
-            type: 'attack',
-            data: JSON.stringify({
-              position: {
-                x: x,
-                y: y,
-              },
-              currentPlayer: indexPlayer,
-              status: status,
-            }),
-            id: 0,
-          }),
-        );
-
-        user.send(
-          JSON.stringify({
-            type: 'turn',
-            data: JSON.stringify({
-              currentPlayer: nextPlayerToShoot,
-            }),
-            id: 0,
-          }),
-        );
+      gameData.set(gameId, {
+        shipPlacementCounter: 2,
+        activePlayerIndex: nextPlayerToShoot,
       });
-    }
-    const enemy = playersInGame?.filter(
-      (u) => u.id !== ws.id,
-    )[0] as WebSocketWithId;
 
-    if (
-      enemy.readyState === WebSocket.CLOSED ||
-      checkLoseConditions(usersWithShips.get(enemy.id))
-    ) {
-      updateVictoryCount(ws.id);
+      // activePlayerIndex = nextPlayerToShoot;
 
-      playersInGame?.forEach((user) =>
-        user.send(
-          JSON.stringify({
-            type: 'finish',
-            data: JSON.stringify({
-              winPlayer: getUser(ws.id)?.index,
-            }),
-            id: 0,
+      user.send(
+        JSON.stringify({
+          type: 'attack',
+          data: JSON.stringify({
+            position: {
+              x: x,
+              y: y,
+            },
+            currentPlayer: indexPlayer,
+            status: status,
           }),
-        ),
+          id: 0,
+        }),
       );
 
-      hitsOfShips.clear();
-      usersWithShips.clear();
-      shipPlacementCounter = 0;
+      user.send(
+        JSON.stringify({
+          type: 'turn',
+          data: JSON.stringify({
+            currentPlayer: nextPlayerToShoot,
+          }),
+          id: 0,
+        }),
+      );
+    });
+  }
+  const enemy = playersInGame?.filter(
+    (u) => u.id !== ws.id,
+  )[0] as WebSocketWithId;
 
-      websocketServer.clients?.forEach((client: WebSocket) => {
-        if (client.readyState === WebSocket.OPEN) {
-          const tempUsersVictoriesArr: userWinInfo[] = [];
-          users.forEach((user) =>
-            tempUsersVictoriesArr.push({
-              name: user.name,
-              wins: user.victories,
-            }),
-          );
-          client.send(
-            JSON.stringify({
-              type: 'update_winners',
-              data: JSON.stringify(tempUsersVictoriesArr),
-              id: 0,
-            }),
-          );
-        }
-      });
-    }
+  if (
+    enemy.readyState === WebSocket.CLOSED ||
+    checkLoseConditions(usersWithShips.get(enemy.id))
+  ) {
+    updateVictoryCount(ws.id);
+
+    playersInGame?.forEach((user) =>
+      user.send(
+        JSON.stringify({
+          type: 'finish',
+          data: JSON.stringify({
+            winPlayer: getUser(ws.id)?.index,
+          }),
+          id: 0,
+        }),
+      ),
+    );
+
+    hitsOfShips.clear();
+    usersWithShips.clear();
+    gameData.set(gameId, {
+      shipPlacementCounter: 0,
+      activePlayerIndex: 0,
+    });
+
+    websocketServer.clients?.forEach((client: WebSocket) => {
+      if (client.readyState === WebSocket.OPEN) {
+        const tempUsersVictoriesArr: userWinInfo[] = [];
+        users.forEach((user) =>
+          tempUsersVictoriesArr.push({
+            name: user.name,
+            wins: user.victories,
+          }),
+        );
+        client.send(
+          JSON.stringify({
+            type: 'update_winners',
+            data: JSON.stringify(tempUsersVictoriesArr),
+            id: 0,
+          }),
+        );
+      }
+    });
   }
 };
 

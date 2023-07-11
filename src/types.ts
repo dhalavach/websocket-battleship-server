@@ -14,10 +14,10 @@ export type User = {
 };
 
 export type Room = {
-   id: number;
+  id: number;
   // users: Map<number, string>;
-  users: WebSocketWithId[]
-}
+  users: WebSocketWithId[];
+};
 
 export type Hit = 'miss' | 'killed' | 'shot';
 
@@ -37,4 +37,9 @@ export type WebSocketWithId = WebSocket & {
 export type userWinInfo = {
   name: string;
   wins: number;
-}
+};
+
+export type GameParameters = {
+  shipPlacementCounter: number;
+  activePlayerIndex: number;
+};

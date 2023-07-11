@@ -1,7 +1,6 @@
-import { User, Hit, Ship } from './../types.ts';
+import { User, Hit, Ship, GameParameters, Room } from './../types.ts';
 import { users } from '../db/userDb.ts';
-export let activeUserName: string;
-// export const usersInGame: User[] = [];
+export const gameData: Map<number, GameParameters> = new Map();
 export const hitsOfShips: Map<string, Set<string>> = new Map();
 export const usersWithShips: Map<string, Ship[]> = new Map();
 
