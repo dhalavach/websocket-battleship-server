@@ -25,8 +25,9 @@ export const websocketServer = new WebSocketServer({
 });
 
 const interval: ReturnType<typeof setInterval> = setInterval(function ping() {
-  websocketServer.clients.forEach((ws: any) => {
-    if (!ws.isAlive) return ws.terminate();
+  const clients = websocketServer.clients as Set<WebSocketWithId>; //temporary evil hack
+  clients.forEach((ws: WebSocketWithId) => {
+    if (ws.hasOwnProperty('isAlive') && !ws.isAlive) return ws.terminate();
     // ws.isAlive = false;
     ws.ping();
   });
@@ -36,10 +37,6 @@ websocketServer.on('connection', (ws: WebSocketWithId) => {
   ws.isAlive = true;
 
   ws.on('error', console.error);
-
-  console.log(
-    'number of websocket server clients: ' + websocketServer.clients.size,
-  );
 
   ws.on('message', (message: string) => {
     switch (JSON.parse(message).type) {

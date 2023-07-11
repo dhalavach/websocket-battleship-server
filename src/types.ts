@@ -33,3 +33,8 @@ export type WebSocketWithId = WebSocket & {
   id: string;
   isAlive: boolean;
 };
+
+export type userWinInfo = {
+  name: string;
+  wins: number;
+}

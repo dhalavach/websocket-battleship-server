@@ -5,7 +5,7 @@ export let activeUserName: string;
 export const hitsOfShips: Map<string, Set<string>> = new Map();
 export const usersWithShips: Map<string, Ship[]> = new Map();
 
-export const checkIfHit = (user: string, ships: Ship[], x: number, y: number): Hit => {
+export const checkIfHit = (user: string, ships: Ship[], x: number, y: number): Hit | undefined => {
   function check(ship: Ship) {
     const lengthX = ship.direction === false ? ship.length - 1 : 0;
     const lengthY = ship.direction === true ? ship.length - 1 : 0;
@@ -25,7 +25,7 @@ export const checkIfHit = (user: string, ships: Ship[], x: number, y: number): H
     }
   }
 
-  return ships.some(check) ? 'shot' : 'miss';
+  if (ships) return ships.some(check) ? 'shot' : 'miss';
 };
 
 export const checkLoseConditions = (
