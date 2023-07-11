@@ -5,7 +5,7 @@ import {
   usersWithShips,
   hitsOfShips,
 } from './../models/gameModel.ts';
-import { Ship, WebSocketWithId, userWinInfo } from '../types.ts';
+import { Hit, Ship, WebSocketWithId, userWinInfo } from '../types.ts';
 import { users } from '../db/userDb.ts';
 import { getUser, updateVictoryCount } from '../models/userModel.ts';
 import { websocketServer } from '../../index.ts';
@@ -50,6 +50,9 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
             id: 0,
           }),
         );
+
+        activePlayerIndex = indexPlayer;
+        console.log('activePlayerIndex: ' + activePlayerIndex);
         ws.send(
           JSON.stringify({
             type: 'turn',
@@ -66,28 +69,31 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
 };
 
 export const handleAttack = (message: string, ws: WebSocketWithId) => {
+  console.log('activePlayerIndex from handleAttack: ' + activePlayerIndex);
+
   if (true) {
     const x = JSON.parse(JSON.parse(message).data).x;
     const y = JSON.parse(JSON.parse(message).data).y;
     const playersInGame = rooms.get(
       JSON.parse(JSON.parse(message).data).gameId,
     )?.users;
+    const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
 
-    if (true) {
+    if (indexPlayer === activePlayerIndex) {
       playersInGame?.forEach((user) => {
         //const enemy = playersInGame?.[+!!!activePlayerIndex] as WebSocketWithId; //will work after shoot in turn only
-        const enemy = playersInGame.filter((u) => u.id !== ws.id)[0];
+        const enemy: WebSocketWithId = playersInGame.filter((u) => u.id !== ws.id)[0];
 
-        const indexPlayer = JSON.parse(JSON.parse(message).data).indexPlayer;
-        const status = checkIfHit(
-          enemy?.id,
-          usersWithShips.get(enemy?.id) as Ship[],
+        const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
+        const status: Hit | undefined = checkIfHit(
+          enemy.id,
+          usersWithShips.get(enemy.id) as Ship[],
           x,
           y,
         );
         const nextPlayerToShoot: number =
           status === 'shot'
-            ? (getUser(ws.id)?.index as number)
+            ? (indexPlayer)
             : (getUser(enemy.id)?.index as number); //activePlayerIndex : +!!!activePlayerIndex;
 
         activePlayerIndex = nextPlayerToShoot;
