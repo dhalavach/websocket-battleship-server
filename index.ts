@@ -27,8 +27,11 @@ export const websocketServer = new WebSocketServer({
 const interval: ReturnType<typeof setInterval> = setInterval(function ping() {
   const clients = websocketServer.clients as Set<WebSocketWithId>; //temporary evil hack
   clients.forEach((ws: WebSocketWithId) => {
-    if (ws.hasOwnProperty('isAlive') && !ws.isAlive) return ws.terminate();
-    // ws.isAlive = false;
+    if (ws.hasOwnProperty('isAlive') && !ws.isAlive) {
+      ws.isAlive = false;
+
+      return ws.terminate();
+    }
     ws.ping();
   });
 }, 1000);

@@ -122,7 +122,10 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       (u) => u.id !== ws.id,
     )[0] as WebSocketWithId;
 
-    if (checkLoseConditions(usersWithShips.get(enemy.id))) {
+    if (
+      enemy.readyState === WebSocket.CLOSED ||
+      checkLoseConditions(usersWithShips.get(enemy.id))
+    ) {
       updateVictoryCount(ws.id);
 
       playersInGame?.forEach((user) =>
