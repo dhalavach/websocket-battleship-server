@@ -54,7 +54,7 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
           JSON.stringify({
             type: 'turn',
             data: JSON.stringify({
-              currentPlayer: 1,
+              currentPlayer: indexPlayer,
             }),
             id: 0,
           }),
@@ -86,8 +86,10 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
           y,
         );
         const nextPlayerToShoot: number =
-          status === 'shot' ?  getUser(ws.id)?.index as number : getUser(enemy.id)?.index as number;//activePlayerIndex : +!!!activePlayerIndex;
-        
+          status === 'shot'
+            ? (getUser(ws.id)?.index as number)
+            : (getUser(enemy.id)?.index as number); //activePlayerIndex : +!!!activePlayerIndex;
+
         activePlayerIndex = nextPlayerToShoot;
 
         user.send(
@@ -116,7 +118,9 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
         );
       });
     }
-    const enemy = playersInGame?.filter((u) => u.id !== ws.id)[0] as WebSocketWithId;
+    const enemy = playersInGame?.filter(
+      (u) => u.id !== ws.id,
+    )[0] as WebSocketWithId;
 
     if (checkLoseConditions(usersWithShips.get(enemy.id))) {
       updateVictoryCount(ws.id);
