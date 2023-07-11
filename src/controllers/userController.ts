@@ -1,9 +1,5 @@
-import WebSocket from 'ws';
-import { v4 as uuidv4 } from 'uuid';
-import { User, WebSocketWithId } from '../types.ts';
+import { WebSocketWithId } from '../types.ts';
 import { validate, getUser, addUser } from '../models/userModel.ts';
-import { users } from '../db/userDb.ts';
-import { rooms } from '../db/roomDb.ts';
 import { getListOfRooms } from '../controllers/roomController.ts';
 
 export const registerUser = (message: string, ws: WebSocketWithId) => {
@@ -55,5 +51,4 @@ export const registerUser = (message: string, ws: WebSocketWithId) => {
       );
     }
   }
-  console.log(users);
 };

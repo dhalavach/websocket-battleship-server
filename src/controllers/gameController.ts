@@ -9,7 +9,7 @@ import {
 import { Hit, Ship, WebSocketWithId, userWinInfo } from '../types.ts';
 import { users } from '../db/userDb.ts';
 import { getUser, updateVictoryCount } from '../models/userModel.ts';
-import { websocketServer } from '../../index.ts';
+import { websocketServer } from '../index.ts';
 import { rooms } from '../db/roomDb.ts';
 
 export const handleAddShips = (message: string, ws: WebSocketWithId) => {

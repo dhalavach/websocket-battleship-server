@@ -1,7 +1,6 @@
 import WebSocket from 'ws';
-import { users } from '../db/userDb.ts';
-import { websocketServer } from '../../index.ts';
-import { WebSocketWithId } from '../types.ts';
+import { websocketServer } from '../index.ts';
+import { RoomData, WebSocketWithId } from '../types.ts';
 import { getUser } from '../models/userModel.ts';
 import { rooms } from '../db/roomDb.ts';
 
@@ -14,7 +13,7 @@ export const createRoom = (message: string, ws: WebSocketWithId) => {
   ];
   const id = rooms.size + 1;
   const roomUsersWsArray = [];
-  roomUsersWsArray.push(ws)
+  roomUsersWsArray.push(ws);
   const roomData = { roomId: id, roomUsers: roomUsersObjArr };
   const tempRoomsArr = [];
   tempRoomsArr.push(roomData);
@@ -24,7 +23,6 @@ export const createRoom = (message: string, ws: WebSocketWithId) => {
     users: roomUsersWsArray,
   };
   rooms.set(id, room);
-
 
   const resp = JSON.stringify({
     type: 'update_room',
@@ -39,19 +37,18 @@ export const createRoom = (message: string, ws: WebSocketWithId) => {
   });
 };
 
-
 export const addUsersToRoom = (message: string, ws: WebSocketWithId) => {
-  const indexRoom = JSON.parse(JSON.parse(message).data).indexRoom || 1 // refactor
-  const roomCreator = rooms.get(indexRoom)?.users[0] || ws //  v. bad
+  const indexRoom = JSON.parse(JSON.parse(message).data).indexRoom || 1; // refactor
+  const roomCreator = rooms.get(indexRoom)?.users[0] || ws; //  v. bad
   if (roomCreator?.id !== ws.id) {
     const newUsersArr = [];
     newUsersArr.push(roomCreator);
     newUsersArr.push(ws);
     const newRoom = {
       id: indexRoom,
-      users: newUsersArr
-    }
-rooms.set(indexRoom, newRoom)
+      users: newUsersArr,
+    };
+    rooms.set(indexRoom, newRoom);
   }
   console.log('message on add to room: ' + message);
   // const userToAdd = users.find((user) => user.name === ws.id);
@@ -72,7 +69,7 @@ rooms.set(indexRoom, newRoom)
 
   // console.log('parsed roomId: ' + roomId);
 
-  const usersInGame = rooms.get(indexRoom)?.users
+  const usersInGame = rooms.get(indexRoom)?.users;
   usersInGame?.forEach((user: WebSocketWithId) => {
     user.send(
       JSON.stringify({
@@ -85,34 +82,17 @@ rooms.set(indexRoom, newRoom)
       }),
     );
   });
-
 };
 
-
-
-
-
 export const getListOfRooms = (ws: WebSocketWithId) => {
-
-  console.log(rooms);
   if (rooms.size > 0) {
-    // const name = rooms.get(1)?.users[0] || '';
-    // const roomUsersObjArr = [
-    //   {
-    //     name: ws.id,
-    //     index: getUser(ws.id)?.index,
-    //   },
-    // ];
-    
-    const tempRoomsArr: any[] = [];
-
-    //const roomData = { roomId: 1, roomUsers: roomUsersObjArr };
+    const tempRoomsArr: RoomData[] = [];
     rooms.forEach((value, key) => {
       tempRoomsArr.push({
         roomId: key,
         roomUsers: value.users,
-      })
-    })
+      });
+    });
 
     const resp = JSON.stringify({
       type: 'update_room',

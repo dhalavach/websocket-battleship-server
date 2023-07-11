@@ -1,9 +1,6 @@
 import { User } from '../types.ts';
 import { users } from '../db/userDb.ts';
 
-// export const playerIndices = new Map();
-// users.map((user, index) => playerIndices.set(user.name, index));
-
 export const validate = (name: string, password: string): boolean => {
   const user = users.find((user) => user.name === name);
   if (user && user.password === password) return true;

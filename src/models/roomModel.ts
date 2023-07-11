@@ -1,12 +1,5 @@
-import WebSocket from 'ws';
-import { WebSocketWithId } from '../types.ts';
-import { rooms } from '../db/roomDb.ts';
-import { getUser } from './userModel.ts';
+import { rooms } from '../db/roomDb';
 
-
-
-// export const roomUsersWsArr: WebSocketWithId[] = [];
-
-export const clearRoom = () => {
+export const clearRooms = () => {
   rooms.clear;
 }

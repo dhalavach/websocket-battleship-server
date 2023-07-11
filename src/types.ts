@@ -43,3 +43,8 @@ export type GameParameters = {
   shipPlacementCounter: number;
   activePlayerIndex: number;
 };
+
+export type RoomData = {
+  roomId: number,
+  roomUsers: WebSocketWithId[],
+}

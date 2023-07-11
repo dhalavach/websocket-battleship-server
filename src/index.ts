@@ -1,14 +1,97 @@
-// import { httpServer } from './http_server/index.ts';
-// import 'dotenv/config';
-// import { wss } from './websocket_server/websocket-server.ts';
+import { httpServer } from './http_server/index.ts';
+import WebSocket, { WebSocketServer } from 'ws';
+import {
+  handleAddShips,
+  handleAttack,
+  handleFinish,
+} from './controllers/gameController.ts';
+import { handleSinglePlayMode } from './controllers/botController.ts';
+import { WebSocketWithId } from './types.ts';
+import { registerUser } from './controllers/userController.ts';
+import { addUsersToRoom, createRoom } from './controllers/roomController.ts';
+import dotenv from 'dotenv';
 
-// const port = Number(process.env.PORT) || 7000;
-// httpServer.listen(port, () => {
-//   console.log(`server running at http://localhost:${port}/`);
-// });
+dotenv.config();
 
-// process.on('SIGINT', () => {
-//   httpServer.close();
-//   wss.close();
-//   process.exit();
-// });
+const PORT = Number(process.env.PORT) || 3000;
+console.log(`Start server on the ${PORT} port!`);
+httpServer.listen(PORT);
+console.log('start ws server');
+
+export const websocketServer = new WebSocketServer({
+  server: httpServer,
+});
+
+const interval: ReturnType<typeof setInterval> = setInterval(function ping() {
+  const clients = websocketServer.clients as Set<WebSocketWithId>; //temporary evil hack
+  clients.forEach((ws: WebSocketWithId) => {
+    if (ws.hasOwnProperty('isAlive') && !ws.isAlive) {
+      ws.isAlive = false;
+
+      return ws.terminate();
+    }
+    ws.ping();
+  });
+}, 1000);
+
+websocketServer.on('connection', (ws: WebSocketWithId) => {
+  ws.isAlive = true;
+
+  ws.on('error', console.error);
+
+  ws.on('message', (message: string) => {
+    switch (JSON.parse(message).type) {
+      case 'reg':
+        registerUser(message, ws);
+        break;
+
+      case 'create_room':
+        createRoom(message, ws);
+        break;
+
+      case 'add_user_to_room':
+        addUsersToRoom(message, ws);
+        break;
+
+      case 'add_ships':
+        handleAddShips(message, ws);
+        break;
+
+      case 'attack':
+        handleAttack(message, ws);
+        break;
+
+      case 'randomAttack':
+        console.log('random attack handled');
+        handleAttack(message, ws);
+        break;
+
+      case 'single_play':
+        handleSinglePlayMode(message, ws);
+        break;
+
+      case 'turn':
+        break;
+
+      case 'finish':
+        handleFinish(ws);
+        break;
+
+      default:
+        ws.send(JSON.stringify({ error: true, errorText: 'Invalid request!' }));
+        break;
+    }
+  });
+});
+
+process.on('SIGINT', () => {
+  clearInterval(interval);
+  websocketServer.clients.forEach((client: WebSocket) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.close();
+    }
+  });
+  httpServer.close();
+  websocketServer.close();
+  process.exit();
+});
