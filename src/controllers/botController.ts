@@ -1,10 +1,10 @@
 import { rooms } from '../db/roomDb.ts';
 import { getUser } from '../models/userModel.ts';
-import { Ship, WebSocketWithId } from './../types.ts';
+import { Hit, Ship, WebSocketWithId } from './../types.ts';
 import { shipsData } from '../models/botModel.ts';
 import { createRoom } from './roomController.ts';
 import { WebSocket } from 'ws';
-import { gameData, usersWithShips } from '../models/gameModel.ts';
+import { checkIfHit, gameData, usersWithShips } from '../models/gameModel.ts';
 import { sendMessage, waitForOpenConnection } from '../helpers.ts';
 import { users } from '../db/userDb.ts';
 
@@ -90,7 +90,6 @@ export const handleSinglePlayMode = async (
       hitCapacity: ship.length,
     };
   });
-
 
   gameData.set(id, {
     shipPlacementCounter: 1,
@@ -178,4 +177,47 @@ export const handleSinglePlayMode = async (
   );
 
   //handle attack
+  const botAttackMessage = {
+    type: 'attack',
+    data: '{"position":{"x":1,"y":2},"currentPlayer":1,"status":"shot"}',
+    id: 0,
+  };
+
+  const botPastShots = new Set();
+
+  const botAttack = (websocket: WebSocketWithId) => {
+    let x: number = Math.floor(Math.random() * 10);
+    let y: number = Math.floor(Math.random() * 10);
+    if (botPastShots.has(`${x}*${y}`)) {
+      while (botPastShots.has(`${x}*${y}`)) {
+        x = Math.floor(Math.random() * 10);
+        y = Math.floor(Math.random() * 10);
+      }
+    }
+
+    botPastShots.add(`${x}*${y}`);
+
+    const status: Hit | undefined = checkIfHit(
+      websocket.id,
+      usersWithShips.get(websocket.id) as Ship[],
+      x,
+      y,
+    );
+    websocket.send(
+      JSON.stringify({
+        type: 'attack',
+        data: JSON.stringify({
+          position: {
+            x: x,
+            y: y,
+          },
+          currentPlayer: websocket.id,
+          status: status,
+        }),
+        id: 0,
+      }),
+    );
+  };
+
+  setInterval(() => botAttack(ws), 2000);
 };
