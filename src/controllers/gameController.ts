@@ -83,10 +83,7 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
   const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
   const opponentIsBot: boolean =
     playersInGame?.filter((player) => player.id !== ws.id)[0].id === 'bot';
-  if (
-    indexPlayer === gameData.get(gameId)?.activePlayerIndex ||
-    opponentIsBot //for debugging
-  ) {
+  if (indexPlayer === gameData.get(gameId)?.activePlayerIndex) {
     playersInGame?.forEach((user) => {
       //const enemy = playersInGame?.[+!!!activePlayerIndex] as WebSocketWithId; //will work after shoot in turn only
       const enemy: WebSocketWithId = playersInGame.filter(

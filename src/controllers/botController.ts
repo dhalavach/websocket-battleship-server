@@ -37,11 +37,12 @@ export const handleSinglePlayMode = async (
   ) as WebSocketWithId;
   botWs.isAlive = true;
   botWs.id = 'bot';
+  const botIndex = users.length + 1;
   const data: string = JSON.stringify({
     type: 'reg',
     data: JSON.stringify({
       name: 'bot',
-      index: users.length + 1,
+      index: botIndex,
       error: false,
       errorText: '',
     }),
@@ -186,38 +187,59 @@ export const handleSinglePlayMode = async (
   const botPastShots = new Set();
 
   const botAttack = (websocket: WebSocketWithId) => {
-    let x: number = Math.floor(Math.random() * 10);
-    let y: number = Math.floor(Math.random() * 10);
-    if (botPastShots.has(`${x}*${y}`)) {
-      while (botPastShots.has(`${x}*${y}`)) {
-        x = Math.floor(Math.random() * 10);
-        y = Math.floor(Math.random() * 10);
+    if (botIndex === gameData.get(id)?.activePlayerIndex) {
+      let x: number = Math.floor(Math.random() * 10);
+      let y: number = Math.floor(Math.random() * 10);
+      if (botPastShots.has(`${x}*${y}`)) {
+        while (botPastShots.has(`${x}*${y}`)) {
+          x = Math.floor(Math.random() * 10);
+          y = Math.floor(Math.random() * 10);
+        }
       }
-    }
 
-    botPastShots.add(`${x}*${y}`);
+      botPastShots.add(`${x}*${y}`);
 
-    const status: Hit | undefined = checkIfHit(
-      websocket.id,
-      usersWithShips.get(websocket.id) as Ship[],
-      x,
-      y,
-    );
-    websocket.send(
-      JSON.stringify({
-        type: 'attack',
-        data: JSON.stringify({
-          position: {
-            x: x,
-            y: y,
-          },
-          currentPlayer: websocket.id,
-          status: status,
+      const status: Hit | undefined = checkIfHit(
+        websocket.id,
+        usersWithShips.get(websocket.id) as Ship[],
+        x,
+        y,
+      );
+
+      const nextPlayerToShoot: number =
+        status === 'shot' ? botIndex : (getUser(websocket.id)?.index as number); //activePlayerIndex : +!!!activePlayerIndex;
+
+      gameData.set(id, {
+        shipPlacementCounter: 2,
+        activePlayerIndex: nextPlayerToShoot,
+      });
+
+      websocket.send(
+        JSON.stringify({
+          type: 'attack',
+          data: JSON.stringify({
+            position: {
+              x: x,
+              y: y,
+            },
+            currentPlayer: botIndex,
+            status: status,
+          }),
+          id: 0,
         }),
-        id: 0,
-      }),
-    );
+      );
+
+      websocket.send(
+        JSON.stringify({
+          type: 'turn',
+          data: JSON.stringify({
+            currentPlayer: nextPlayerToShoot,
+          }),
+          id: 0,
+        }),
+      );
+    }
   };
 
-  setInterval(() => botAttack(ws), 2000);
+  setInterval(() => botAttack(ws), 7000);
 };
