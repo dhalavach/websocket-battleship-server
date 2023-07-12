@@ -1,7 +1,7 @@
 import { rooms } from '../db/roomDb.ts';
 import { getUser } from '../models/userModel.ts';
 import { Hit, Ship, WebSocketWithId } from './../types.ts';
-import { shipsData } from '../models/botModel.ts';
+import { mockShipData } from '../models/botModel.ts';
 import { createRoom } from './roomController.ts';
 import { WebSocket } from 'ws';
 import { checkIfHit, gameData, usersWithShips } from '../models/gameModel.ts';
@@ -63,15 +63,10 @@ export const handleSinglePlayMode = async (
   const playersInGame = rooms.get(id)?.users;
   console.log(playersInGame?.map((p) => p.id));
 
-
   //handle ship placement
 
-  const tempShipMessage = {
-    type: 'add_ships',
-    data: '{"gameId":1,"ships":[{"position":{"x":8,"y":4},"direction":true,"type":"huge","length":4},{"position":{"x":7,"y":0},"direction":true,"type":"large","length":3},{"position":{"x":3,"y":3},"direction":true,"type":"large","length":3},{"position":{"x":1,"y":7},"direction":false,"type":"medium","length":2},{"position":{"x":0,"y":2},"direction":false,"type":"medium","length":2},{"position":{"x":1,"y":9},"direction":false,"type":"medium","length":2},{"position":{"x":5,"y":2},"direction":false,"type":"small","length":1},{"position":{"x":8,"y":9},"direction":true,"type":"small","length":1},{"position":{"x":5,"y":6},"direction":false,"type":"small","length":1},{"position":{"x":4,"y":8},"direction":false,"type":"small","length":1}],"indexPlayer":1}',
-    id: 0,
-  };
-  const ships: Ship[] = JSON.parse(tempShipMessage.data).ships;
+  const randomIndex = Math.floor(Math.random() * mockShipData.length);
+  const ships: Ship[] = JSON.parse(mockShipData[randomIndex]).ships;
 
   const botShipsWithHitCapacity = ships.map((ship: Ship) => {
     return {
@@ -114,19 +109,16 @@ export const handleSinglePlayMode = async (
     }),
   );
 
-  setTimeout(
-    () =>
-      botWs.send( // changed from ws.send
-        JSON.stringify({
-          type: 'start_game',
-          data: JSON.stringify({
-            ships: botShipsWithHitCapacity,
-            currentPlayerIndex: getUser('bot')?.index,
-          }),
-          id: 0,
-        }),
-      ),
-    5000,
+  botWs.send(
+    // changed from ws.send
+    JSON.stringify({
+      type: 'start_game',
+      data: JSON.stringify({
+        ships: botShipsWithHitCapacity,
+        currentPlayerIndex: getUser('bot')?.index,
+      }),
+      id: 0,
+    }),
   );
 
   ws.send(
