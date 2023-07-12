@@ -63,13 +63,6 @@ export const handleSinglePlayMode = async (
   const playersInGame = rooms.get(id)?.users;
   console.log(playersInGame?.map((p) => p.id));
 
-  // const resp = JSON.stringify({
-  //   type: 'update_room',
-  //   data: JSON.stringify(tempRoomsArr),
-  //   id: 0,
-  // });
-
-  // ws.send(resp)
 
   //handle ship placement
 
@@ -121,30 +114,9 @@ export const handleSinglePlayMode = async (
     }),
   );
 
-  // ws.send(
-  //   JSON.stringify({
-  //     type: 'start_game',
-  //     data: JSON.stringify({
-  //       ships: usersWithShips.get(ws.id),
-  //       currentPlayerIndex: getUser(ws.id)?.index,
-  //     }),
-  //     id: 0,
-  //   }),
-  // );
-
-  // botWs.send(
-  //   JSON.stringify({
-  //     type: 'start_game',
-  //     data: JSON.stringify({
-  //       ships: botShipsWithHitCapacity,
-  //       currentPlayerIndex: getUser('bot')?.index,
-  //     }),
-  //     id: 0,
-  //   }),
-  // );
   setTimeout(
     () =>
-      ws.send(
+      botWs.send( // changed from ws.send
         JSON.stringify({
           type: 'start_game',
           data: JSON.stringify({
