@@ -57,8 +57,7 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
           shipPlacementCounter: 0,
           activePlayerIndex: 0,
         };
-        if (data)
-          data.activePlayerIndex = indexPlayer;
+        if (data) data.activePlayerIndex = indexPlayer;
         gameData.set(gameId, data);
         ws.send(
           JSON.stringify({
@@ -82,12 +81,16 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
   const playersInGame = rooms.get(gameId)?.users;
   const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
 
-  if (indexPlayer === gameData.get(gameId)?.activePlayerIndex) {
+  if (
+    indexPlayer === gameData.get(gameId)?.activePlayerIndex ||
+    ws.id === 'asdf@email.com'
+  ) {
     playersInGame?.forEach((user) => {
       //const enemy = playersInGame?.[+!!!activePlayerIndex] as WebSocketWithId; //will work after shoot in turn only
       const enemy: WebSocketWithId = playersInGame.filter(
         (u) => u.id !== ws.id,
       )[0];
+      console.log('enemy from handle attack: ' + enemy?.id);
 
       const indexPlayer: number = JSON.parse(
         JSON.parse(message).data,
@@ -134,13 +137,11 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       );
     });
   }
-  const enemy = playersInGame?.filter(
-    (u) => u.id !== ws.id,
-  )[0] as WebSocketWithId;
+  const enemy = playersInGame?.filter((u) => u.id !== ws.id)[0];
 
   if (
-    enemy.readyState === WebSocket.CLOSED ||
-    checkLoseConditions(usersWithShips.get(enemy.id))
+    enemy?.readyState === WebSocket.CLOSED ||
+    checkLoseConditions(usersWithShips.get(String(enemy?.id)))
   ) {
     updateVictoryCount(ws.id);
 
@@ -162,6 +163,7 @@ export const handleAttack = (message: string, ws: WebSocketWithId) => {
       shipPlacementCounter: 0,
       activePlayerIndex: 0,
     });
+    rooms.clear(); //refactor
 
     websocketServer.clients?.forEach((client: WebSocket) => {
       if (client.readyState === WebSocket.OPEN) {

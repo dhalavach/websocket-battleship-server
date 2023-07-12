@@ -15,7 +15,6 @@ export type User = {
 
 export type Room = {
   id: number;
-  // users: Map<number, string>;
   users: WebSocketWithId[];
 };
 

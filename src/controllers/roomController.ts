@@ -51,23 +51,6 @@ export const addUsersToRoom = (message: string, ws: WebSocketWithId) => {
     rooms.set(indexRoom, newRoom);
   }
   console.log('message on add to room: ' + message);
-  // const userToAdd = users.find((user) => user.name === ws.id);
-  // if (userToAdd) usersInGame.push(userToAdd);
-  // console.log('users: ' + users.map((user) => user.name));
-  // console.log('users in game: ' + usersInGame.map((user) => user.name));
-
-  // const roomId = JSON.parse(JSON.parse(message).data).indexRoom;
-
-  // const newRoomUsersStringArr = rooms.get(roomId)?.users || [];
-  // if (userToAdd && newRoomUsersStringArr)
-  //   newRoomUsersStringArr.push(userToAdd.name);
-  // const updatedRoom = {
-  //   id: roomId,
-  //   users: newRoomUsersStringArr,
-  // };
-  // rooms.set(roomId, updatedRoom);
-
-  // console.log('parsed roomId: ' + roomId);
 
   const usersInGame = rooms.get(indexRoom)?.users;
   usersInGame?.forEach((user: WebSocketWithId) => {
