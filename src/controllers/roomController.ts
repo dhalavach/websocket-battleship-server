@@ -50,7 +50,7 @@ export const addUsersToRoom = (message: string, ws: WebSocketWithId) => {
     };
     rooms.set(indexRoom, newRoom);
   }
-  console.log('message on add to room: ' + message);
+  // console.log('message on add to room: ' + message);
 
   const usersInGame = rooms.get(indexRoom)?.users;
   usersInGame?.forEach((user: WebSocketWithId) => {

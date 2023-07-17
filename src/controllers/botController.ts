@@ -2,20 +2,19 @@ import { rooms } from '../db/roomDb.ts';
 import { getUser } from '../models/userModel.ts';
 import { Hit, Ship, WebSocketWithId } from './../types.ts';
 import { mockShipData } from '../models/botModel.ts';
-import { createRoom } from './roomController.ts';
 import { WebSocket } from 'ws';
 import { checkIfHit, gameData, usersWithShips } from '../models/gameModel.ts';
-import { sendMessage, waitForOpenConnection } from '../helpers.ts';
+import { sendMessage } from '../helpers.ts';
 import { users } from '../db/userDb.ts';
 
 export const handleSinglePlayMode = async (
   message: string,
   ws: WebSocketWithId,
 ) => {
-  console.log('handling single play mode');
-  console.log(
-    'data from message on single play mode: ' + JSON.parse(message).data,
-  );
+  // console.log('handling single play mode');
+  // console.log(
+  //   'data from message on single play mode: ' + JSON.parse(message).data,
+  // );
   //usersInGame.push(ws)
 
   //create hidden room
@@ -60,8 +59,8 @@ export const handleSinglePlayMode = async (
   };
   rooms.set(id, room);
 
-  const playersInGame = rooms.get(id)?.users;
-  console.log(playersInGame?.map((p) => p.id));
+  // const playersInGame = rooms.get(id)?.users;
+  // console.log(playersInGame?.map((p) => p.id));
 
   //handle ship placement
 
@@ -142,11 +141,6 @@ export const handleSinglePlayMode = async (
   );
 
   //handle attack
-  const botAttackMessage = {
-    type: 'attack',
-    data: '{"position":{"x":1,"y":2},"currentPlayer":1,"status":"shot"}',
-    id: 0,
-  };
 
   const botPastShots = new Set();
 

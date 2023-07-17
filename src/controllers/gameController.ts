@@ -75,21 +75,21 @@ export const handleAddShips = (message: string, ws: WebSocketWithId) => {
 };
 
 export const handleAttack = (message: string, ws: WebSocketWithId) => {
-  console.log('message on attack: ' + message);
+  // console.log('message on attack: ' + message);
   const gameId = JSON.parse(JSON.parse(message).data).gameId;
   const x = JSON.parse(JSON.parse(message).data).x;
   const y = JSON.parse(JSON.parse(message).data).y;
   const playersInGame = rooms.get(gameId)?.users;
   const indexPlayer: number = JSON.parse(JSON.parse(message).data).indexPlayer;
-  const opponentIsBot: boolean =
-    playersInGame?.filter((player) => player.id !== ws.id)[0].id === 'bot';
+  // const opponentIsBot: boolean =
+  //   playersInGame?.filter((player) => player.id !== ws.id)[0].id === 'bot';
   if (indexPlayer === gameData.get(gameId)?.activePlayerIndex) {
     playersInGame?.forEach((user) => {
       //const enemy = playersInGame?.[+!!!activePlayerIndex] as WebSocketWithId; //will work after shoot in turn only
       const enemy: WebSocketWithId = playersInGame.filter(
         (u) => u.id !== ws.id,
       )[0];
-      console.log('enemy from handle attack: ' + enemy?.id);
+      // console.log('enemy from handle attack: ' + enemy?.id);
 
       const indexPlayer: number = JSON.parse(
         JSON.parse(message).data,
