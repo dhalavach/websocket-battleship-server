@@ -1,0 +1,5 @@
+{
+  "watch:": ["./"],
+  "ignore": [],
+  "exec": "npx ts-node ./index.ts"
+}
